@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>國語第七課《跟著公共藝術去旅行》心智圖關鍵字排序互動學習網</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --red: #ef4444;
+      --red-bg: #fef2f2;
+      --magenta: #ec4899;
+      --magenta-bg: #fdf2f8;
+      --purple: #8b5cf6;
+      --purple-bg: #f5f3ff;
+      --blue: #3b82f6;
+      --blue-bg: #eff6ff;
+      --teal: #06b6d4;
+      --teal-bg: #ecfeff;
+      --green: #10b981;
+      --green-bg: #ecfdf5;
+      --border-dark: #1e293b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", "Microsoft JhengHei", sans-serif;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: #1e293b;
+      min-width: 1400px;
+      overflow-x: auto;
+      padding-bottom: 240px; /* 為底部詞庫留出空間 */
+    }
+
+    /* 頂部功能列 */
+    header {
+      background: #ffffff;
+      border-bottom: 2px solid #e2e8f0;
+      padding: 12px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .badge {
+      background: #2563eb;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 9999px;
+    }
+    .title {
+      font-size: 20px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    /* 學生基本資料 */
+    .student-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #f1f5f9;
+      padding: 6px 14px;
+      border-radius: 12px;
+    }
+    .student-info label {
+      font-size: 14px;
+      font-weight: 700;
+      color: #475569;
+    }
+    .student-info input {
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 14px;
+      font-weight: 600;
+      width: 70px;
+      text-align: center;
+      background: #fff;
+    }
+    .student-info input.name-input {
+      width: 100px;
+    }
+
+    /* 操作按鈕群 */
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      font-size: 15px;
+      font-weight: 700;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn:active {
+      transform: scale(0.96);
+    }
+    .btn-secondary {
+      background: #e2e8f0;
+      color: #334155;
+    }
+    .btn-secondary:hover {
+      background: #cbd5e1;
+    }
+    .btn-check {
+      background: #10b981;
+      color: white;
+    }
+    .btn-check:hover {
+      background: #059669;
+    }
+    .btn-pdf {
+      background: #6366f1;
+      color: white;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+    .btn-pdf:hover {
+      background: #4f46e5;
+    }
+
+    /* 心智圖畫布主區域 */
+    #mindmap-container {
+      width: 1720px;
+      height: 980px;
+      margin: 20px auto;
+      position: relative;
+      background: #ffffff;
+      border-radius: 24px;
+      border: 2px solid #e2e8f0;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+      overflow: hidden;
+    }
+
+    /* 連線 SVG */
+    #mindmap-svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* 節點通用樣式 */
+    .mm-node {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+
+    /* 中心主題節點 */
+    .center-theme {
+      left: 50%;
+      top: 50%;
+      width: 250px;
+      height: 90px;
+      background: #ffffff;
+      border: 4px solid var(--border-dark);
+      border-radius: 18px;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+      flex-direction: column;
+      gap: 3px;
+    }
+    .center-theme .tag {
+      font-size: 14px;
+      font-weight: 700;
+      color: #64748b;
+    }
+    .center-theme .title {
+      font-size: 21px;
+      font-weight: 900;
+      color: #0f172a;
+    }
+
+    /* 一級分支主題 (彩色實心膠囊) */
+    .branch-pill {
+      padding: 10px 22px;
+      border-radius: 9999px;
+      font-size: 17px;
+      font-weight: 800;
+      color: #ffffff;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+      white-space: nowrap;
+    }
+    .pill-red { background: var(--red); }
+    .pill-magenta { background: var(--magenta); }
+    .pill-purple { background: var(--purple); }
+    .pill-blue { background: var(--blue); }
+    .pill-teal { background: var(--teal); }
+    .pill-green { background: var(--green); }
+
+    /* 二級次標籤 (空心帶色邊框) */
+    .sub-pill {
+      padding: 6px 16px;
+      border-radius: 9999px;
+      font-size: 15px;
+      font-weight: 700;
+      background: #ffffff;
+      border: 2px solid;
+      white-space: nowrap;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    }
+    .sub-magenta { border-color: var(--magenta); color: #be185d; }
+    .sub-purple { border-color: var(--purple); color: #6d28d9; }
+    .sub-blue { border-color: var(--blue); color: #1d4ed8; }
+    .sub-teal { border-color: var(--teal); color: #0e7490; }
+
+    /* 放置目標框格 (Drop Slots) */
+    .drop-slot {
+      min-width: 145px;
+      min-height: 38px;
+      padding: 6px 14px;
+      border-radius: 10px;
+      border: 2px dashed #94a3b8;
+      background: rgba(248, 250, 252, 0.8);
+      font-size: 14px;
+      font-weight: 700;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .drop-slot:hover {
+      border-color: #3b82f6;
+      background: #f0f7ff;
+    }
+    .drop-slot.drag-over {
+      border-color: #2563eb;
+      background: #dbeafe;
+      transform: translate(-50%, -50%) scale(1.08);
+      box-shadow: 0 0 12px rgba(37, 99, 235, 0.4);
+    }
+    .drop-slot.target-highlight {
+      animation: pulse 1.2s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.6); }
+      70% { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+    }
+
+    /* 已放置的卡片樣式 */
+    .drop-slot.filled {
+      border-style: solid;
+      background: #ffffff;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+      cursor: grab;
+    }
+    .drop-slot.correct {
+      border-color: #10b981 !important;
+      background: #ecfdf5 !important;
+      color: #065f46 !important;
+    }
+    .drop-slot.incorrect {
+      border-color: #ef4444 !important;
+      background: #fef2f2 !important;
+      color: #991b1b !important;
+    }
+
+    /* 底部懸浮關鍵詞卡片庫 (Card Bank) */
+    #keyword-bank-panel {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #ffffff;
+      border-top: 2px solid #cbd5e1;
+      box-shadow: 0 -8px 24px rgba(0,0,0,0.08);
+      z-index: 200;
+      padding: 12px 24px 16px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .bank-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .bank-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #334155;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .bank-progress {
+      font-size: 14px;
+      font-weight: 700;
+      color: #2563eb;
+      background: #eff6ff;
+      padding: 4px 12px;
+      border-radius: 9999px;
+    }
+
+    .bank-filters {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+    }
+    .filter-tab {
+      padding: 4px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      background: #f1f5f9;
+      color: #64748b;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s;
+    }
+    .filter-tab.active {
+      background: #1e293b;
+      color: #ffffff;
+    }
+
+    .cards-scroll-area {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      max-height: 125px;
+      overflow-y: auto;
+      padding: 4px;
+    }
+
+    /* 關鍵詞便條紙卡片 */
+    .word-card {
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      background: #ffffff;
+      border: 2px solid #cbd5e1;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      cursor: grab;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .word-card:active {
+      cursor: grabbing;
+      transform: scale(0.95);
+    }
+    .word-card.selected {
+      border-color: #2563eb !important;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.35) !important;
+      transform: translateY(-3px);
+      background: #eff6ff !important;
+    }
+    .word-card.tag-red { border-left: 5px solid var(--red); }
+    .word-card.tag-magenta { border-left: 5px solid var(--magenta); }
+    .word-card.tag-purple { border-left: 5px solid var(--purple); }
+    .word-card.tag-blue { border-left: 5px solid var(--blue); }
+    .word-card.tag-teal { border-left: 5px solid var(--teal); }
+    .word-card.tag-green { border-left: 5px solid var(--green); }
+
+    /* 列印與 PDF 最佳化樣式 */
+    @media print {
+      body {
+        background: #ffffff;
+        padding-bottom: 0;
+      }
+      header, #keyword-bank-panel {
+        display: none !important;
+      }
+      #mindmap-container {
+        margin: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        width: 100% !important;
+        height: 100vh !important;
+      }
+      @page {
+        size: A4 landscape;
+        margin: 5mm;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 頂部功能導覽列 -->
+  <header>
+    <div class="brand">
+      <span class="badge">翰林六上國語</span>
+      <h1 class="title">第七課《跟著公共藝術去旅行》心智圖排序互動學習網</h1>
+    </div>
+
+    <!-- 學生填寫資料 -->
+    <div class="student-info">
+      <label>班級</label>
+      <input type="text" id="stu-class" placeholder="601" value="六年一班">
+      <label>座號</label>
+      <input type="text" id="stu-seat" placeholder="01" value="01">
+      <label>姓名</label>
+      <input type="text" id="stu-name" class="name-input" placeholder="請輸入姓名" value="林小華">
+    </div>
+
+    <!-- 操作功能 -->
+    <div class="actions">
+      <button class="btn btn-secondary" onclick="resetAll()">🔄 重置重做</button>
+      <button class="btn btn-secondary" onclick="shuffleCards()">🎲 打散詞彙</button>
+      <button class="btn btn-check" onclick="checkAnswers()">🔍 檢查答案</button>
+      <button class="btn btn-pdf" onclick="exportToPDF()">📥 下載心智圖 (PDF)</button>
+    </div>
+  </header>
+
+  <!-- 心智圖互動畫布 (1720 x 980) -->
+  <div id="mindmap-container">
+    <svg id="mindmap-svg"></svg>
+
+    <!-- 中心節點 (860, 490) -->
+    <div class="mm-node center-theme" id="n_center" style="left: 860px; top: 490px;">
+      <span class="tag">【 第七課 】</span>
+      <span class="title">跟著公共藝術去旅行</span>
+    </div>
+
+    <!-- ==================== 右側分支 ==================== -->
+    <!-- 1. 起因 -->
+    <div class="mm-node branch-pill pill-red" id="b_origin" style="left: 1150px; top: 240px;">起因</div>
+    <div class="mm-node drop-slot" id="s_org1" data-ans="阿姨介紹大地之書" style="left: 1370px; top: 200px;">[ 待放詞彙 ]</div>
+    <div class="mm-node drop-slot" id="s_org2" data-ans="對公共藝術不太了解" style="left: 1370px; top: 260px;">[ 待放詞彙 ]</div>
+    <div class="mm-node drop-slot" id="s_org3" data-ans="公共藝術之旅" style="left: 1560px; top: 260px;">[ 待放詞彙 ]</div>
+
+    <!-- 2. 經過（一）花間小鹿 -->
+    <div class="mm-node branch-pill pill-magenta" id="b_deer" style="left: 1180px; top: 420px;">經過（一）花間小鹿</div>
+    <div class="mm-node sub-pill sub-magenta" id="sub_deer_loc" style="left: 1370px; top: 340px;">地點</div>
+    <div class="mm-node drop-slot" id="s_deer_loc1" data-ans="嘉義觸口遊客中心" style="left: 1540px; top: 340px;">[ 地點待放 ]</div>
+
+    <div class="mm-node sub-pill sub-magenta" id="sub_deer_app" style="left: 1370px; top: 420px;">外觀</div>
+    <div class="mm-node drop-slot" id="s_deer_app1" data-ans="金屬光澤" style="left: 1540px; top: 385px;">[ 外觀待放 1 ]</div>
+    <div class="mm-node drop-slot" id="s_deer_app2" data-ans="布滿花朵" style="left: 1540px; top: 425px;">[ 外觀待放 2 ]</div>
+    <div class="mm-node drop-slot" id="s_deer_app3" data-ans="昂揚的鹿角" style="left: 1540px; top: 465px;">[ 外觀待放 3 ]</div>
+
+    <div class="mm-node sub-pill sub-magenta" id="sub_deer_mea" style="left: 1370px; top: 520px;">涵義</div>
+    <div class="mm-node drop-slot" id="s_deer_mea1" data-ans="取材地點設置" style="left: 1540px; top: 505px;">[ 涵義待放 1 ]</div>
+    <div class="mm-node drop-slot" id="s_deer_mea2" data-ans="認識鄒族傳說" style="left: 1540px; top: 545px;">[ 涵義待放 2 ]</div>
+
+    <!-- 3. 經過（二）分合隨緣 -->
+    <div class="mm-node branch-pill pill-purple" id="b_art2" style="left: 1180px; top: 680px;">經過（二）分合隨緣</div>
+    <div class="mm-node sub-pill sub-purple" id="sub_art2_loc" style="left: 1370px; top: 620px;">地點</div>
+    <div class="mm-node drop-slot" id="s_art2_loc1" data-ans="臺南市美術館" style="left: 1540px; top: 620px;">[ 地點待放 ]</div>
+
+    <div class="mm-node sub-pill sub-purple" id="sub_art2_app" style="left: 1370px; top: 680px;">外觀</div>
+    <div class="mm-node drop-slot" id="s_art2_app1" data-ans="不鏽鋼" style="left: 1540px; top: 660px;">[ 外觀待放 1 ]</div>
+    <div class="mm-node drop-slot" id="s_art2_app2" data-ans="凹凸鏡面" style="left: 1540px; top: 700px;">[ 外觀待放 2 ]</div>
+
+    <div class="mm-node sub-pill sub-purple" id="sub_art2_mea" style="left: 1370px; top: 760px;">涵義</div>
+    <div class="mm-node drop-slot" id="s_art2_mea1" data-ans="觀賞角度不同" style="left: 1510px; top: 760px;">[ 涵義待放 1 ]</div>
+    <div class="mm-node drop-slot" id="s_art2_mea2" data-ans="呈現分合的面貌" style="left: 1650px; top: 760px;">[ 涵義待放 2 ]</div>
+
+    <!-- ==================== 左側分支 ==================== -->
+    <!-- 4. 迴響 -->
+    <div class="mm-node branch-pill pill-green" id="b_echo" style="left: 580px; top: 240px;">迴響</div>
+    <div class="mm-node drop-slot" id="s_ec1_1" data-ans="恍然大悟" style="left: 420px; top: 200px;">[ 待放詞彙 ]</div>
+    <div class="mm-node drop-slot" id="s_ec1_2" data-ans="分合隨緣" style="left: 290px; top: 200px;">[ 待放詞彙 ]</div>
+    <div class="mm-node drop-slot" id="s_ec1_3" data-ans="時空更迭變換" style="left: 170px; top: 200px;">[ 待放詞彙 ]</div>
+    <div class="mm-node drop-slot" id="s_ec1_4" data-ans="始終可接觸互動" style="left: 50px; top: 200px;">[ 待放詞彙 ]</div>
+
+    <div class="mm-node drop-slot" id="s_ec2_1" data-ans="公共藝術" style="left: 420px; top: 260px;">[ 待放詞彙 ]</div>
+    <div class="mm-node drop-slot" id="s_ec2_2" data-ans="引領我們接近觀看" style="left: 270px; top: 260px;">[ 待放詞彙 ]</div>
+    <div class="mm-node drop-slot" id="s_ec2_3" data-ans="在藝術世界中旅行" style="left: 100px; top: 260px;">[ 待放詞彙 ]</div>
+
+    <!-- 5. 結果—爸媽的說明 -->
+    <div class="mm-node branch-pill pill-teal" id="b_result" style="left: 560px; top: 480px;">結果—爸媽的說明</div>
+    <div class="mm-node sub-pill sub-teal" id="sub_book_mom" style="left: 370px; top: 440px;">大地之書（媽）</div>
+    <div class="mm-node sub-pill sub-teal" id="sub_deer_dad" style="left: 370px; top: 540px;">花間小鹿（爸）</div>
+
+    <div class="mm-node drop-slot" id="s_res_loc" data-ans="陽明交通大學附設醫院蘭陽院區" style="left: 170px; top: 380px;">[ 地點待放 ]</div>
+    <div class="mm-node drop-slot" id="s_res_app1" data-ans="青銅雕塑" style="left: 210px; top: 420px;">[ 外觀待放 1 ]</div>
+    <div class="mm-node drop-slot" id="s_res_app2" data-ans="植物細部紋理" style="left: 90px; top: 420px;">[ 外觀待放 2 ]</div>
+    <div class="mm-node drop-slot" id="s_res_app3" data-ans="彷彿能閱讀的書" style="left: 210px; top: 460px;">[ 外觀待放 3 ]</div>
+    <div class="mm-node drop-slot" id="s_res_mea1" data-ans="提醒留意植物之美" style="left: 190px; top: 500px;">[ 涵義待放 1 ]</div>
+    <div class="mm-node drop-slot" id="s_res_mea2" data-ans="不用輕聲細語接觸藝術品" style="left: 60px; top: 500px;">[ 涵義待放 2 ]</div>
+
+    <!-- 6. 經過（三）參觀美術館 -->
+    <div class="mm-node branch-pill pill-blue" id="b_visit" style="left: 560px; top: 720px;">經過（三）參觀美術館</div>
+    <div class="mm-node sub-pill sub-blue" id="sub_dad_warn" style="left: 370px; top: 680px;">爸爸叮嚀</div>
+    <div class="mm-node drop-slot" id="s_dad_slot" data-ans="輕聲細語" style="left: 220px; top: 680px;">[ 待放詞彙 ]</div>
+
+    <div class="mm-node sub-pill sub-blue" id="sub_mom_explain" style="left: 370px; top: 760px;">媽媽解說</div>
+    <div class="mm-node drop-slot" id="s_mom_slot" data-ans="體會藝術家傳達的意思" style="left: 190px; top: 760px;">[ 待放詞彙 ]</div>
+  </div>
+
+  <!-- 底部懸浮關鍵詞庫 -->
+  <div id="keyword-bank-panel">
+    <div class="bank-header">
+      <div class="bank-title">
+        <span>📦 待排序關鍵詞庫（共 29 詞）</span>
+        <span style="font-size: 13px; font-weight: 500; color: #64748b;">提示：可拖曳或「點擊卡片 ➔ 點擊框格」快速放置！點擊已放置卡片可收回。</span>
+      </div>
+      <div class="bank-progress" id="bank-progress">已放置：0 / 29</div>
+    </div>
+
+    <!-- 標籤過濾 -->
+    <div class="bank-filters">
+      <button class="filter-tab active" onclick="filterCategory('all', this)">全部 (29)</button>
+      <button class="filter-tab" onclick="filterCategory('red', this)">起因 (3)</button>
+      <button class="filter-tab" onclick="filterCategory('magenta', this)">經過一 花間小鹿 (6)</button>
+      <button class="filter-tab" onclick="filterCategory('purple', this)">經過二 分合隨緣 (5)</button>
+      <button class="filter-tab" onclick="filterCategory('blue', this)">經過三 參觀美術館 (2)</button>
+      <button class="filter-tab" onclick="filterCategory('teal', this)">結果 爸媽說明 (6)</button>
+      <button class="filter-tab" onclick="filterCategory('green', this)">迴響 (7)</button>
+    </div>
+
+    <!-- 卡片滾動放置區 -->
+    <div class="cards-scroll-area" id="cards-container">
+      <!-- 由 JavaScript 動態生成 28 張關鍵詞卡片 -->
+    </div>
+  </div>
+
+  <script>
+    // 28 個完整課文心智圖關鍵詞數據
+    const KEYWORDS = [
+      // 起因 (red)
+      { id: 'k1', text: '阿姨介紹大地之書', cat: 'red' },
+      { id: 'k2', text: '對公共藝術不太了解', cat: 'red' },
+      { id: 'k3', text: '公共藝術之旅', cat: 'red' },
+      // 經過一：花間小鹿 (magenta)
+      { id: 'k4', text: '嘉義觸口遊客中心', cat: 'magenta' },
+      { id: 'k5', text: '金屬光澤', cat: 'magenta' },
+      { id: 'k6', text: '布滿花朵', cat: 'magenta' },
+      { id: 'k7', text: '昂揚的鹿角', cat: 'magenta' },
+      { id: 'k8', text: '取材地點設置', cat: 'magenta' },
+      { id: 'k9', text: '認識鄒族傳說', cat: 'magenta' },
+      // 經過二：分合隨緣 (purple)
+      { id: 'k10', text: '臺南市美術館', cat: 'purple' },
+      { id: 'k11', text: '不鏽鋼', cat: 'purple' },
+      { id: 'k12', text: '凹凸鏡面', cat: 'purple' },
+      { id: 'k13', text: '觀賞角度不同', cat: 'purple' },
+      { id: 'k14', text: '呈現分合的面貌', cat: 'purple' },
+      // 經過三：參觀美術館 (blue)
+      { id: 'k15', text: '輕聲細語', cat: 'blue' },
+      { id: 'k16', text: '體會藝術家傳達的意思', cat: 'blue' },
+      // 結果—爸媽的說明 (teal)
+      { id: 'k17', text: '陽明交通大學附設醫院蘭陽院區', cat: 'teal' },
+      { id: 'k18', text: '青銅雕塑', cat: 'teal' },
+      { id: 'k19', text: '植物細部紋理', cat: 'teal' },
+      { id: 'k20', text: '彷彿能閱讀的書', cat: 'teal' },
+      { id: 'k21', text: '提醒留意植物之美', cat: 'teal' },
+      { id: 'k22', text: '不用輕聲細語接觸藝術品', cat: 'teal' },
+      // 迴響 (green)
+      { id: 'k23', text: '恍然大悟', cat: 'green' },
+      { id: 'k24', text: '分合隨緣', cat: 'green' },
+      { id: 'k25', text: '時空更迭變換', cat: 'green' },
+      { id: 'k26', text: '始終可接觸互動', cat: 'green' },
+      { id: 'k27', text: '公共藝術', cat: 'green' },
+      { id: 'k28', text: '引領我們接近觀看', cat: 'green' },
+      { id: 'k29', text: '在藝術世界中旅行', cat: 'green' }
+    ];
+
+    let currentSelectedCard = null;
+    let audioCtx = null;
+
+    // 簡易音效生成器 (Web Audio API)
+    function playBeep(type) {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+        if (type === 'select') {
+          osc.frequency.setValueAtTime(440, now);
+          gain.gain.setValueAtTime(0.1, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+          osc.start(now);
+          osc.stop(now + 0.08);
+        } else if (type === 'place') {
+          osc.frequency.setValueAtTime(587, now);
+          osc.frequency.exponentialRampToValueAtTime(880, now + 0.12);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+          osc.start(now);
+          osc.stop(now + 0.12);
+        } else if (type === 'success') {
+          osc.frequency.setValueAtTime(523, now);
+          osc.frequency.setValueAtTime(659, now + 0.1);
+          osc.frequency.setValueAtTime(783, now + 0.2);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+          osc.start(now);
+          osc.stop(now + 0.35);
+        }
+      } catch (e) {}
+    }
+
+    // 繪製 Coggle 貝茲曲線連線
+    function drawConnections() {
+      const svg = document.getElementById('mindmap-svg');
+      svg.innerHTML = '';
+
+      function link(id1, id2, color, strokeWidth = 4, dash = false) {
+        const el1 = document.getElementById(id1);
+        const el2 = document.getElementById(id2);
+        if (!el1 || !el2) return;
+
+        const container = document.getElementById('mindmap-container').getBoundingClientRect();
+        const r1 = el1.getBoundingClientRect();
+        const r2 = el2.getBoundingClientRect();
+
+        let x1 = (r1.left + r1.right) / 2 - container.left;
+        let y1 = (r1.top + r1.bottom) / 2 - container.top;
+        let x2 = (r2.left + r2.right) / 2 - container.left;
+        let y2 = (r2.top + r2.bottom) / 2 - container.top;
+
+        if (x1 < x2) {
+          x1 = r1.right - container.left;
+          x2 = r2.left - container.left;
+        } else {
+          x1 = r1.left - container.left;
+          x2 = r2.right - container.left;
+        }
+
+        const dx = Math.abs(x2 - x1) * 0.5;
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        let d;
+        if (x1 < x2) {
+          d = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
+        } else {
+          d = `M ${x1} ${y1} C ${x1 - dx} ${y1}, ${x2 + dx} ${y2}, ${x2} ${y2}`;
+        }
+
+        path.setAttribute('d', d);
+        path.setAttribute('stroke', color);
+        path.setAttribute('stroke-width', strokeWidth);
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke-linecap', 'round');
+        if (dash) path.setAttribute('stroke-dasharray', '5 5');
+        svg.appendChild(path);
+      }
+
+      // 中心主幹
+      link('n_center', 'b_origin', '#ef4444', 7);
+      link('n_center', 'b_deer', '#ec4899', 7);
+      link('n_center', 'b_art2', '#8b5cf6', 7);
+      link('n_center', 'b_visit', '#3b82f6', 7);
+      link('n_center', 'b_result', '#06b6d4', 7);
+      link('n_center', 'b_echo', '#10b981', 7);
+
+      // 起因
+      link('b_origin', 's_org1', '#ef4444', 3, true);
+      link('b_origin', 's_org2', '#ef4444', 3, true);
+      link('s_org2', 's_org3', '#ef4444', 2.5, true);
+
+      // 經過一：花間小鹿
+      link('b_deer', 'sub_deer_loc', '#ec4899', 3.5);
+      link('b_deer', 'sub_deer_app', '#ec4899', 3.5);
+      link('b_deer', 'sub_deer_mea', '#ec4899', 3.5);
+      link('sub_deer_loc', 's_deer_loc1', '#ec4899', 2.5, true);
+      link('sub_deer_app', 's_deer_app1', '#ec4899', 2.5, true);
+      link('sub_deer_app', 's_deer_app2', '#ec4899', 2.5, true);
+      link('sub_deer_app', 's_deer_app3', '#ec4899', 2.5, true);
+      link('sub_deer_mea', 's_deer_mea1', '#ec4899', 2.5, true);
+      link('sub_deer_mea', 's_deer_mea2', '#ec4899', 2.5, true);
+
+      // 經過二：分合隨緣
+      link('b_art2', 'sub_art2_loc', '#8b5cf6', 3.5);
+      link('b_art2', 'sub_art2_app', '#8b5cf6', 3.5);
+      link('b_art2', 'sub_art2_mea', '#8b5cf6', 3.5);
+      link('sub_art2_loc', 's_art2_loc1', '#8b5cf6', 2.5, true);
+      link('sub_art2_app', 's_art2_app1', '#8b5cf6', 2.5, true);
+      link('sub_art2_app', 's_art2_app2', '#8b5cf6', 2.5, true);
+      link('sub_art2_mea', 's_art2_mea1', '#8b5cf6', 2.5, true);
+      link('s_art2_mea1', 's_art2_mea2', '#8b5cf6', 2.5, true);
+
+      // 經過三：參觀美術館
+      link('b_visit', 'sub_dad_warn', '#3b82f6', 3.5);
+      link('b_visit', 'sub_mom_explain', '#3b82f6', 3.5);
+      link('sub_dad_warn', 's_dad_slot', '#3b82f6', 2.5, true);
+      link('sub_mom_explain', 's_mom_slot', '#3b82f6', 2.5, true);
+
+      // 結果—爸媽說明
+      link('b_result', 'sub_book_mom', '#06b6d4', 3.5);
+      link('b_result', 'sub_deer_dad', '#06b6d4', 3.5);
+      link('sub_book_mom', 's_res_loc', '#06b6d4', 2.5, true);
+      link('sub_book_mom', 's_res_app1', '#06b6d4', 2.5, true);
+      link('sub_book_mom', 's_res_app2', '#06b6d4', 2.5, true);
+      link('sub_book_mom', 's_res_app3', '#06b6d4', 2.5, true);
+      link('sub_book_mom', 's_res_mea1', '#06b6d4', 2.5, true);
+      link('sub_book_mom', 's_res_mea2', '#06b6d4', 2.5, true);
+
+      // 迴響
+      link('b_echo', 's_ec1_1', '#10b981', 3, true);
+      link('s_ec1_1', 's_ec1_2', '#10b981', 2.5, true);
+      link('s_ec1_2', 's_ec1_3', '#10b981', 2.5, true);
+      link('s_ec1_3', 's_ec1_4', '#10b981', 2.5, true);
+
+      link('b_echo', 's_ec2_1', '#10b981', 3, true);
+      link('s_ec2_1', 's_ec2_2', '#10b981', 2.5, true);
+      link('s_ec2_2', 's_ec2_3', '#10b981', 2.5, true);
+    }
+
+    // 初始化卡片庫
+    function initCards() {
+      const container = document.getElementById('cards-container');
+      container.innerHTML = '';
+
+      KEYWORDS.forEach(item => {
+        const card = document.createElement('div');
+        card.className = `word-card tag-${item.cat}`;
+        card.id = `card-${item.id}`;
+        card.draggable = true;
+        card.innerText = item.text;
+        card.dataset.text = item.text;
+        card.dataset.cat = item.cat;
+
+        // 點擊選取（平板觸控友善）
+        card.onclick = (e) => {
+          e.stopPropagation();
+          selectCard(card);
+        };
+
+        // 拖曳處理
+        card.ondragstart = (e) => {
+          e.dataTransfer.setData('text/plain', item.text);
+          card.classList.add('selected');
+        };
+        card.ondragend = () => {
+          card.classList.remove('selected');
+        };
+
+        container.appendChild(card);
+      });
+
+      updateProgress();
+    }
+
+    // 選取卡片狀態切換
+    function selectCard(card) {
+      if (currentSelectedCard === card) {
+        card.classList.remove('selected');
+        currentSelectedCard = null;
+      } else {
+        if (currentSelectedCard) currentSelectedCard.classList.remove('selected');
+        currentSelectedCard = card;
+        card.classList.add('selected');
+        playBeep('select');
+      }
+    }
+
+    // 綁定所有 Slots 的拖曳與點擊放置事件
+    function initSlots() {
+      const slots = document.querySelectorAll('.drop-slot');
+      slots.forEach(slot => {
+        // 原預設提示文字儲存
+        slot.dataset.placeholder = slot.innerText;
+
+        // 點擊 Slot 動作：
+        // 1. 若當前有選中的卡片，放置進來
+        // 2. 若 Slot 已被填入，點擊則將卡片退回詞庫
+        slot.onclick = () => {
+          if (currentSelectedCard) {
+            placeCardIntoSlot(currentSelectedCard.dataset.text, slot);
+            currentSelectedCard.classList.remove('selected');
+            currentSelectedCard = null;
+          } else if (slot.classList.contains('filled')) {
+            // 退回詞庫
+            const text = slot.innerText;
+            returnCardToBank(text);
+            slot.classList.remove('filled', 'correct', 'incorrect');
+            slot.innerText = slot.dataset.placeholder;
+            playBeep('select');
+            updateProgress();
+          }
+        };
+
+        // 拖曳進入
+        slot.ondragover = (e) => {
+          e.preventDefault();
+          slot.classList.add('drag-over');
+        };
+        slot.ondragleave = () => {
+          slot.classList.remove('drag-over');
+        };
+        slot.ondrop = (e) => {
+          e.preventDefault();
+          slot.classList.remove('drag-over');
+          const text = e.dataTransfer.getData('text/plain');
+          if (text) {
+            placeCardIntoSlot(text, slot);
+          }
+        };
+      });
+    }
+
+    // 將卡片放置進 Slot
+    function placeCardIntoSlot(text, slot) {
+      // 若 slot 原本已有卡片，先將原卡片退回詞庫
+      if (slot.classList.contains('filled')) {
+        returnCardToBank(slot.innerText);
+      }
+
+      slot.innerText = text;
+      slot.classList.add('filled');
+      slot.classList.remove('correct', 'incorrect');
+      playBeep('place');
+
+      // 從詞庫中隱藏該卡片
+      const cardEl = Array.from(document.querySelectorAll('.word-card')).find(c => c.dataset.text === text);
+      if (cardEl) {
+        cardEl.style.display = 'none';
+      }
+
+      updateProgress();
+    }
+
+    // 將卡片退回詞庫
+    function returnCardToBank(text) {
+      const cardEl = Array.from(document.querySelectorAll('.word-card')).find(c => c.dataset.text === text);
+      if (cardEl) {
+        cardEl.style.display = 'inline-flex';
+      }
+    }
+
+    // 更新進度
+    function updateProgress() {
+      const filledSlots = document.querySelectorAll('.drop-slot.filled').length;
+      const totalSlots = document.querySelectorAll('.drop-slot').length;
+      document.getElementById('bank-progress').innerText = `已放置：${filledSlots} / ${totalSlots}`;
+    }
+
+    // 分類過濾
+    function filterCategory(cat, tabBtn) {
+      document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+      tabBtn.classList.add('active');
+
+      const cards = document.querySelectorAll('.word-card');
+      cards.forEach(card => {
+        // 若該卡片已被放置，則不顯示
+        const isPlaced = Array.from(document.querySelectorAll('.drop-slot.filled')).some(s => s.innerText === card.dataset.text);
+        if (isPlaced) {
+          card.style.display = 'none';
+          return;
+        }
+
+        if (cat === 'all' || card.dataset.cat === cat) {
+          card.style.display = 'inline-flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    // 隨機打散全部詞彙
+    function shuffleCards() {
+      const container = document.getElementById('cards-container');
+      const cards = Array.from(container.children);
+      cards.sort(() => Math.random() - 0.5);
+      cards.forEach(card => container.appendChild(card));
+      playBeep('select');
+    }
+
+    // 重置所有框格與詞庫
+    function resetAll() {
+      if (!confirm('確定要清空重新排序嗎？')) return;
+      document.querySelectorAll('.drop-slot').forEach(slot => {
+        slot.classList.remove('filled', 'correct', 'incorrect');
+        slot.innerText = slot.dataset.placeholder;
+      });
+      document.querySelectorAll('.word-card').forEach(card => {
+        card.style.display = 'inline-flex';
+        card.classList.remove('selected');
+      });
+      currentSelectedCard = null;
+      updateProgress();
+    }
+
+    // 檢查答案
+    function checkAnswers() {
+      const slots = document.querySelectorAll('.drop-slot');
+      let correctCount = 0;
+      let totalCount = slots.length;
+
+      slots.forEach(slot => {
+        const userVal = slot.innerText.trim();
+        const expected = slot.dataset.ans.trim();
+
+        if (slot.classList.contains('filled')) {
+          if (userVal === expected) {
+            slot.classList.add('correct');
+            slot.classList.remove('incorrect');
+            correctCount++;
+          } else {
+            slot.classList.add('incorrect');
+            slot.classList.remove('correct');
+          }
+        } else {
+          slot.classList.remove('correct', 'incorrect');
+        }
+      });
+
+      if (correctCount === totalCount) {
+        playBeep('success');
+        alert(`🎉 太厲害了！全對！恭喜完成第七課心智圖架構！\n請點擊上方「下載心智圖 (PDF)」按鈕繳交成果！`);
+      } else {
+        alert(`📊 目前答對 ${correctCount} / ${totalCount} 題。\n綠色表示正確，紅色表示放錯位置囉，再想想看！`);
+      }
+    }
+
+    // 匯出 PDF 檔案
+    async function exportToPDF() {
+      const name = document.getElementById('stu-name').value.trim() || '學生';
+      const seat = document.getElementById('stu-seat').value.trim() || '00';
+      const className = document.getElementById('stu-class').value.trim() || '六年級';
+      const fileName = `${className}_${seat}號_${name}_第七課心智圖.pdf`;
+
+      // 檢查是否加載了 html2canvas 與 jsPDF
+      if (window.html2canvas && window.jspdf) {
+        const btn = document.querySelector('.btn-pdf');
+        const originalText = btn.innerText;
+        btn.innerText = '⏳ 正在生成 PDF...';
+        btn.disabled = true;
+
+        try {
+          const container = document.getElementById('mindmap-container');
+          const canvas = await html2canvas(container, {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: '#ffffff'
+          });
+
+          const imgData = canvas.toDataURL('image/jpeg', 0.95);
+          const { jsPDF } = window.jspdf;
+          const pdf = new jsPDF({
+            orientation: 'landscape',
+            unit: 'mm',
+            format: 'a4'
+          });
+
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = pdf.internal.pageSize.getHeight();
+
+          // 頁首印上學生資訊
+          pdf.setFontSize(14);
+          pdf.setTextColor(30, 41, 59);
+          pdf.text(`翰林六上國語 第七課《跟著公共藝術去旅行》心智圖 | 班級：${className} 座號：${seat} 姓名：${name}`, 15, 12);
+
+          // 放置心智圖影像，適應 A4 橫式比例
+          const imgRatio = canvas.width / canvas.height;
+          let drawW = pdfWidth - 20;
+          let drawH = drawW / imgRatio;
+          if (drawH > pdfHeight - 22) {
+            drawH = pdfHeight - 22;
+            drawW = drawH * imgRatio;
+          }
+          const posX = (pdfWidth - drawW) / 2;
+          const posY = 18;
+
+          pdf.addImage(imgData, 'JPEG', posX, posY, drawW, drawH);
+          pdf.save(fileName);
+          playBeep('success');
+        } catch (err) {
+          console.error('Canvas export failed, falling back to window.print', err);
+          window.print();
+        } finally {
+          btn.innerText = originalText;
+          btn.disabled = false;
+        }
+      } else {
+        // Fallback 直接使用瀏覽器專業橫向列印
+        window.print();
+      }
+    }
+
+    // 初始化執行
+    window.addEventListener('DOMContentLoaded', () => {
+      drawConnections();
+      initCards();
+      initSlots();
+
+      window.addEventListener('resize', drawConnections);
+    });
+  </script>
+</body>
+</html>
