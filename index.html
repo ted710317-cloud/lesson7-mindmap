@@ -581,34 +581,47 @@
       transform: translate(-50%, -50%);
       z-index: 15;
       background: #ffffff;
-      border-radius: 14px;
-      padding: 6px;
-      box-shadow: 0 8px 22px rgba(0,0,0,0.12);
-      border: 2px solid #e2e8f0;
+      border-radius: 18px;
+      padding: 9px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+      border: 3px solid #cbd5e1;
       cursor: pointer;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
-      transition: all 0.25s ease;
-      width: 130px;
+      gap: 6px;
+      transition: all 0.25s cubic-bezier(0.2, 0, 0, 1);
+      width: 200px;
     }
     .art-photo-badge:hover {
-      transform: translate(-50%, -50%) scale(1.08);
-      box-shadow: 0 12px 28px rgba(0,0,0,0.18);
+      transform: translate(-50%, -50%) scale(1.06);
+      box-shadow: 0 16px 36px rgba(59, 130, 246, 0.25);
       border-color: #3b82f6;
     }
     .art-photo-badge img {
-      width: 118px;
-      height: 80px;
+      width: 182px;
+      height: 124px;
       object-fit: cover;
-      border-radius: 8px;
+      border-radius: 12px;
       background: #e2e8f0;
+      display: block;
     }
-    .art-photo-badge span {
-      font-size: 13px;
-      font-weight: 800;
-      color: #334155;
+    .art-photo-badge .badge-title {
+      font-size: 14px;
+      font-weight: 900;
+      color: #1e293b;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .art-photo-badge .badge-hint {
+      font-size: 11px;
+      font-weight: 700;
+      color: #2563eb;
+      background: #eff6ff;
+      padding: 1px 8px;
+      border-radius: 9999px;
       white-space: nowrap;
     }
 
@@ -1071,10 +1084,11 @@
       <!-- 2. 經過（一）花間小鹿 (Magenta) -->
       <div class="mm-node node-branch-pill pill-magenta" id="b_deer" style="left: 1490px; top: 540px;">經過（一）花間小鹿</div>
       
-      <!-- 藝術品小圖徽章 1：花間小鹿 -->
-      <div class="art-photo-badge" id="art_badge_deer" style="left: 1350px; top: 440px;" onclick="openLightbox('deer')">
+      <!-- 藝術品清晰寫真徽章 1：花間小鹿 (放大呈現) -->
+      <div class="art-photo-badge" id="art_badge_deer" style="left: 1300px; top: 415px;" onclick="openLightbox('deer')" title="點擊放大觀看完整作品與解說">
         <img src="artwork_deer.jpg" onerror="this.src='https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=300&auto=format&fit=crop&q=80'" alt="花間小鹿">
-        <span>📷 花間小鹿 (寫真)</span>
+        <span class="badge-title">📷 花間小鹿 (寫真)</span>
+        <span class="badge-hint">🔍 點擊看大圖</span>
       </div>
 
       <!-- 地點 -->
@@ -1095,10 +1109,11 @@
       <!-- 3. 經過（二）分合隨緣 (Purple) -->
       <div class="mm-node node-branch-pill pill-purple" id="b_art2" style="left: 1470px; top: 890px;">經過（二）分合隨緣</div>
       
-      <!-- 藝術品小圖徽章 2：分合隨緣 -->
-      <div class="art-photo-badge" id="art_badge_mirror" style="left: 1330px; top: 980px;" onclick="openLightbox('mirror')">
+      <!-- 藝術品清晰寫真徽章 2：分合隨緣 (放大呈現) -->
+      <div class="art-photo-badge" id="art_badge_mirror" style="left: 1300px; top: 1010px;" onclick="openLightbox('mirror')" title="點擊放大觀看完整作品與解說">
         <img src="artwork_mirror.jpg" onerror="this.src='https://images.unsplash.com/photo-1513694203232-719a280e022f?w=300&auto=format&fit=crop&q=80'" alt="分合隨緣">
-        <span>📷 分合隨緣 (寫真)</span>
+        <span class="badge-title">📷 分合隨緣 (寫真)</span>
+        <span class="badge-hint">🔍 點擊看大圖</span>
       </div>
 
       <!-- 地點 -->
@@ -1132,10 +1147,11 @@
       <!-- 5. 結果—爸媽的說明 (Teal) -->
       <div class="mm-node node-branch-pill pill-teal" id="b_result" style="left: 740px; top: 620px;">結果—爸媽的說明</div>
 
-      <!-- 藝術品小圖徽章 3：大地之書 -->
-      <div class="art-photo-badge" id="art_badge_book" style="left: 750px; top: 510px;" onclick="openLightbox('book')">
+      <!-- 藝術品清晰寫真徽章 3：大地之書 (放大呈現) -->
+      <div class="art-photo-badge" id="art_badge_book" style="left: 740px; top: 460px;" onclick="openLightbox('book')" title="點擊放大觀看完整作品與解說">
         <img src="artwork_book.jpg" onerror="this.src='https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=300&auto=format&fit=crop&q=80'" alt="大地之書">
-        <span>📷 大地之書 (寫真)</span>
+        <span class="badge-title">📷 大地之書 (寫真)</span>
+        <span class="badge-hint">🔍 點擊看大圖</span>
       </div>
 
       <!-- 大地之書（媽）與 花間小鹿（爸） -->
