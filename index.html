@@ -343,11 +343,12 @@
       /* 移除過渡以保證縮放與連線即時同步無抖動 */
     }
 
-    /* 畫布導航與縮放浮動工具列 */
+    /* 畫布導航與縮放浮動工具列（底部置中，避免遮擋右下角浮水印） */
     #canvas-toolbar {
       position: fixed;
       bottom: 24px;
-      right: 32px;
+      left: 50%;
+      transform: translateX(-50%);
       z-index: 1500;
       background: rgba(255, 255, 255, 0.94);
       backdrop-filter: blur(8px);
@@ -864,6 +865,118 @@
       }
       @page { size: A4 landscape; margin: 6mm; }
     }
+
+    /* ============================================================
+       【右下角製作者浮水印認證徽章】
+       ============================================================ */
+    .mindmap-watermark {
+      position: absolute;
+      right: 56px;
+      bottom: 46px;
+      z-index: 20;
+      pointer-events: none;
+      user-select: none;
+      font-family: 'PingFang TC', 'Microsoft JhengHei', 'Noto Sans TC', sans-serif;
+    }
+
+    .wm-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 2px dashed #2563eb;
+      border-radius: 18px;
+      padding: 12px 22px;
+      box-shadow: 0 8px 24px rgba(37, 99, 235, 0.1);
+      transition: all 0.2s ease;
+    }
+
+    .wm-seal {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 52px;
+      height: 52px;
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      border: 2px solid #3b82f6;
+      border-radius: 50%;
+      box-shadow: 0 4px 10px rgba(59, 130, 246, 0.15);
+      flex-shrink: 0;
+    }
+
+    .wm-badge-icon {
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .wm-badge-text {
+      font-size: 10px;
+      font-weight: 800;
+      color: #1d4ed8;
+      letter-spacing: 0.5px;
+      margin-top: 1px;
+    }
+
+    .wm-divider {
+      width: 1.5px;
+      height: 48px;
+      background: #cbd5e1;
+      flex-shrink: 0;
+    }
+
+    .wm-content {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      text-align: left;
+    }
+
+    .wm-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #334155;
+      letter-spacing: 0.3px;
+    }
+
+    .wm-student-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 17px;
+      color: #0f172a;
+    }
+
+    .wm-tag {
+      background: #2563eb;
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    .wm-info-item strong {
+      font-weight: 800;
+      color: #1e3a8a;
+    }
+
+    .wm-dot {
+      color: #94a3b8;
+      font-weight: bold;
+    }
+
+    .wm-meta {
+      font-size: 11px;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
   </style>
 </head>
 <body>
@@ -1050,7 +1163,34 @@
 
       <div class="mm-node node-sub-pill sub-blue" id="sub_mom_explain" style="left: 500px; top: 960px;">媽媽解說</div>
       <div class="mm-node drop-slot" id="s_mom_slot" data-ans="體會藝術家傳達的意思" data-color="blue" style="left: 270px; top: 960px;">[ 待放置 ]</div>
-    </div>
+    
+        <!-- ==================== 右下角製作者浮水印認證徽章 ==================== -->
+        <div id="mindmap-watermark" class="mindmap-watermark">
+          <div class="wm-card">
+            <div class="wm-seal">
+              <span class="wm-badge-icon">🎓</span>
+              <div class="wm-badge-text">學習認證</div>
+            </div>
+            <div class="wm-divider"></div>
+            <div class="wm-content">
+              <div class="wm-title">翰林六上國語 第七課《跟著公共藝術去旅行》心智圖</div>
+              <div class="wm-student-info">
+                <span class="wm-tag">製作者</span>
+                <span class="wm-info-item"><strong id="wm-class-val">六年一班</strong></span>
+                <span class="wm-dot">·</span>
+                <span class="wm-info-item"><strong id="wm-seat-val">01</strong> 號</span>
+                <span class="wm-dot">·</span>
+                <span class="wm-info-item"><strong id="wm-name-val">林小華</strong></span>
+              </div>
+              <div class="wm-meta">
+                <span>數位學習成果存證</span>
+                <span class="wm-dot">·</span>
+                <span id="wm-date-val">2026/11/15</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
   </div>
   </main>
 
@@ -1619,6 +1759,28 @@
       document.getElementById('lightbox-modal').classList.remove('active');
     }
 
+
+    // 同步製作者浮水印資料（班級、姓名、座號、時間）
+    function syncWatermark() {
+      const cls = document.getElementById('stu-class').value.trim() || '六年一班';
+      const seat = document.getElementById('stu-seat').value.trim() || '01';
+      const name = document.getElementById('stu-name').value.trim() || '林小華';
+
+      const elCls = document.getElementById('wm-class-val');
+      const elSeat = document.getElementById('wm-seat-val');
+      const elName = document.getElementById('wm-name-val');
+      const elDate = document.getElementById('wm-date-val');
+
+      if (elCls) elCls.innerText = cls;
+      if (elSeat) elSeat.innerText = seat;
+      if (elName) elName.innerText = name;
+      if (elDate) {
+        const now = new Date();
+        const dateStr = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')}`;
+        elDate.innerText = dateStr;
+      }
+    }
+
     // 一鍵匯出 A4 橫向 PDF
     async function exportToPDF() {
       const name = document.getElementById('stu-name').value.trim() || '學生';
@@ -1632,13 +1794,25 @@
         btn.innerText = '⏳ 生成 PDF 中...';
         btn.disabled = true;
 
+        let oldTransform = '';
+        const canvasEl = document.getElementById('mindmap-canvas');
         try {
-          const canvasEl = document.getElementById('mindmap-canvas');
+          syncWatermark();
+          if (canvasEl) {
+            oldTransform = canvasEl.style.transform;
+            canvasEl.style.transform = 'none';
+          }
+          await new Promise(r => setTimeout(r, 60));
+
           const canvas = await html2canvas(canvasEl, {
             scale: 2,
             useCORS: true,
             backgroundColor: '#ffffff'
           });
+
+          if (canvasEl && oldTransform) {
+            canvasEl.style.transform = oldTransform;
+          }
 
           const imgData = canvas.toDataURL('image/jpeg', 0.95);
           const { jsPDF } = window.jspdf;
@@ -1675,6 +1849,9 @@
           console.error(e);
           window.print();
         } finally {
+          if (canvasEl && oldTransform) {
+            canvasEl.style.transform = oldTransform;
+          }
           btn.innerText = origText;
           btn.disabled = false;
         }
@@ -1820,6 +1997,11 @@
 
     // 初始化載入
     window.addEventListener('DOMContentLoaded', () => {
+      syncWatermark();
+      document.getElementById('stu-class').addEventListener('input', syncWatermark);
+      document.getElementById('stu-seat').addEventListener('input', syncWatermark);
+      document.getElementById('stu-name').addEventListener('input', syncWatermark);
+
       drawLines();
       initCardBank();
       initSlots();
