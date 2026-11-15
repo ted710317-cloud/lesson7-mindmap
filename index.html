@@ -51,8 +51,8 @@
     body {
       background-color: var(--bg);
       color: #1e293b;
-      min-width: 1400px;
-      overflow-x: auto;
+      width: 100%;
+      overflow-x: hidden;
     }
 
     /* 頂部操作與學生資訊列 */
@@ -312,12 +312,26 @@
        【心智圖主畫布 (Mind Map Canvas)】
        ============================================================ */
     #mindmap-viewport {
-      padding: 24px 32px 80px 32px;
-      display: flex;
-      justify-content: center;
+      width: 100%;
+      overflow-x: auto;
+      overflow-y: auto;
+      padding: 24px 30px 100px 30px;
+      box-sizing: border-box;
+      position: relative;
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+    }
+
+    .mindmap-scroll-container {
+      display: inline-block;
+      min-width: 100%;
+      padding: 0 40px;
+      text-align: center;
     }
 
     #mindmap-canvas {
+      display: inline-block;
+      text-align: left;
       width: 2260px;
       height: 1280px;
       position: relative;
@@ -325,7 +339,65 @@
       border-radius: 28px;
       border: 2px solid #e2e8f0;
       box-shadow: 0 14px 40px rgba(0,0,0,0.05);
-      overflow: hidden;
+      transform-origin: top center;
+      transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1);
+    }
+
+    /* 畫布導航與縮放浮動工具列 */
+    #canvas-toolbar {
+      position: fixed;
+      bottom: 24px;
+      right: 32px;
+      z-index: 1500;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(8px);
+      border: 2px solid #cbd5e1;
+      border-radius: 9999px;
+      padding: 6px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+    .toolbar-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .toolbar-divider {
+      width: 1px;
+      height: 24px;
+      background: #cbd5e1;
+    }
+    .tb-btn {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 14px;
+      font-weight: 800;
+      color: #334155;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .tb-btn:hover {
+      background: #3b82f6;
+      color: #ffffff;
+      border-color: #2563eb;
+    }
+    .tb-btn:active {
+      transform: scale(0.95);
+    }
+    .zoom-text {
+      font-size: 14px;
+      font-weight: 800;
+      color: #1e293b;
+      min-width: 44px;
+      text-align: center;
     }
 
     /* SVG 連線層 */
@@ -702,15 +774,16 @@
        【心智圖主畫布 (2260 x 1280) — 100% 精準對齊 Coggle 原圖】
        ============================================================ -->
   <main id="mindmap-viewport">
-    <div id="mindmap-canvas">
-      <!-- SVG 曲線層 -->
-      <svg id="svg-connections"></svg>
+    <div class="mindmap-scroll-container">
+      <div id="mindmap-canvas">
+        <!-- SVG 曲線層 -->
+        <svg id="svg-connections"></svg>
 
-      <!-- 中心主題節點 (1130, 640) -->
-      <div class="mm-node node-center" id="n_center">
-        <span class="tag">【 第七課 】</span>
-        <span class="title">跟著公共藝術去旅行</span>
-      </div>
+        <!-- 中心主題節點 (1130, 640) -->
+        <div class="mm-node node-center" id="n_center">
+          <span class="tag">【 第七課 】</span>
+          <span class="title">跟著公共藝術去旅行</span>
+        </div>
 
       <!-- ==================== 右側分支 ==================== -->
       <!-- 1. 起因 (Red) -->
@@ -815,7 +888,25 @@
       <div class="mm-node node-sub-pill sub-blue" id="sub_mom_explain" style="left: 500px; top: 960px;">媽媽解說</div>
       <div class="mm-node drop-slot" id="s_mom_slot" data-ans="體會藝術家傳達的意思" data-color="blue" style="left: 270px; top: 960px;">[ 待放置 ]</div>
     </div>
+  </div>
   </main>
+
+  <!-- 畫布導航與縮放浮動工具列 -->
+  <div id="canvas-toolbar">
+    <div class="toolbar-group">
+      <button class="tb-btn" onclick="scrollToLeft()" title="查看左側分支（迴響、結果、美術館）">⬅️ 看左側</button>
+      <button class="tb-btn active" onclick="scrollToCenter()" title="回到中心主題">🎯 置中</button>
+      <button class="tb-btn" onclick="scrollToRight()" title="查看右側分支（起因、花間小鹿、分合隨緣）">➡️ 看右側</button>
+    </div>
+    <div class="toolbar-divider"></div>
+    <div class="toolbar-group">
+      <button class="tb-btn" onclick="fitToScreen()" title="將全圖縮放至適合螢幕寬度">🖥️ 全圖適配</button>
+      <button class="tb-btn" onclick="zoomOut()" title="縮小">➖</button>
+      <span class="zoom-text" id="zoom-val-text">100%</span>
+      <button class="tb-btn" onclick="zoomIn()" title="放大">➕</button>
+      <button class="tb-btn" onclick="resetZoom()" title="恢復 100%">1:1</button>
+    </div>
+  </div>
 
   <!-- ============================================================
        【藝術品彈窗 (Lightbox Modal)】
@@ -1372,12 +1463,107 @@
       }
     }
 
+    // ============================================================
+    // 【視角平移、縮放與導航控制】
+    // ============================================================
+    let currentScale = 1.0;
+
+    function setZoom(scale) {
+      currentScale = Math.min(Math.max(scale, 0.45), 1.5);
+      const canvas = document.getElementById('mindmap-canvas');
+      canvas.style.transform = `scale(${currentScale})`;
+      document.getElementById('zoom-val-text').innerText = `${Math.round(currentScale * 100)}%`;
+      setTimeout(drawLines, 100);
+    }
+
+    function zoomIn() {
+      setZoom(currentScale + 0.1);
+    }
+
+    function zoomOut() {
+      setZoom(currentScale - 0.1);
+    }
+
+    function resetZoom() {
+      setZoom(1.0);
+      scrollToCenter();
+    }
+
+    function fitToScreen() {
+      const vp = document.getElementById('mindmap-viewport');
+      const availableWidth = vp.clientWidth - 80;
+      const scale = availableWidth / 2260;
+      setZoom(scale);
+      vp.scrollTo({ left: 0, behavior: 'smooth' });
+      showToast('🖥️ 已自動縮放適配全螢幕！');
+    }
+
+    function scrollToCenter() {
+      const vp = document.getElementById('mindmap-viewport');
+      const canvas = document.getElementById('mindmap-canvas');
+      if (vp && canvas) {
+        const target = (canvas.offsetWidth * currentScale - vp.clientWidth) / 2;
+        vp.scrollTo({ left: Math.max(0, target), behavior: 'smooth' });
+      }
+    }
+
+    function scrollToLeft() {
+      const vp = document.getElementById('mindmap-viewport');
+      if (vp) vp.scrollTo({ left: 0, behavior: 'smooth' });
+    }
+
+    function scrollToRight() {
+      const vp = document.getElementById('mindmap-viewport');
+      const canvas = document.getElementById('mindmap-canvas');
+      if (vp && canvas) {
+        vp.scrollTo({ left: canvas.offsetWidth * currentScale, behavior: 'smooth' });
+      }
+    }
+
+    // 支援滑鼠按住背景平移畫布 (Mouse Drag to Pan)
+    function initPanning() {
+      const vp = document.getElementById('mindmap-viewport');
+      let isDown = false;
+      let startX, startY, sLeft, sTop;
+
+      vp.addEventListener('mousedown', (e) => {
+        // 點在卡片、按鈕、輸入框或藝術品徽章上不觸發畫布平移
+        if (e.target.closest('.gray-word-card') || e.target.closest('.drop-slot') || e.target.closest('button') || e.target.closest('input') || e.target.closest('.art-photo-badge') || e.target.closest('#canvas-toolbar')) return;
+        isDown = true;
+        vp.style.cursor = 'grabbing';
+        startX = e.pageX - vp.offsetLeft;
+        startY = e.pageY - vp.offsetTop;
+        sLeft = vp.scrollLeft;
+        sTop = vp.scrollTop;
+      });
+
+      window.addEventListener('mouseup', () => {
+        if (!isDown) return;
+        isDown = false;
+        vp.style.cursor = 'default';
+      });
+
+      vp.addEventListener('mousemove', (e) => {
+        if (!isDown) return;
+        e.preventDefault();
+        const x = e.pageX - vp.offsetLeft;
+        const y = e.pageY - vp.offsetTop;
+        vp.scrollLeft = sLeft - (x - startX) * 1.3;
+        vp.scrollTop = sTop - (y - startY) * 1.3;
+      });
+    }
+
     // 初始化載入
     window.addEventListener('DOMContentLoaded', () => {
       drawLines();
       initCardBank();
       initSlots();
-      window.addEventListener('resize', drawLines);
+      initPanning();
+      window.addEventListener('resize', () => {
+        drawLines();
+      });
+      // 頁面加載完成後平滑置中到「第七課」中心核心
+      setTimeout(scrollToCenter, 150);
     });
   </script>
 </body>
@@ -1938,12 +2124,107 @@
       }
     }
 
+    // ============================================================
+    // 【視角平移、縮放與導航控制】
+    // ============================================================
+    let currentScale = 1.0;
+
+    function setZoom(scale) {
+      currentScale = Math.min(Math.max(scale, 0.45), 1.5);
+      const canvas = document.getElementById('mindmap-canvas');
+      canvas.style.transform = `scale(${currentScale})`;
+      document.getElementById('zoom-val-text').innerText = `${Math.round(currentScale * 100)}%`;
+      setTimeout(drawLines, 100);
+    }
+
+    function zoomIn() {
+      setZoom(currentScale + 0.1);
+    }
+
+    function zoomOut() {
+      setZoom(currentScale - 0.1);
+    }
+
+    function resetZoom() {
+      setZoom(1.0);
+      scrollToCenter();
+    }
+
+    function fitToScreen() {
+      const vp = document.getElementById('mindmap-viewport');
+      const availableWidth = vp.clientWidth - 80;
+      const scale = availableWidth / 2260;
+      setZoom(scale);
+      vp.scrollTo({ left: 0, behavior: 'smooth' });
+      showToast('🖥️ 已自動縮放適配全螢幕！');
+    }
+
+    function scrollToCenter() {
+      const vp = document.getElementById('mindmap-viewport');
+      const canvas = document.getElementById('mindmap-canvas');
+      if (vp && canvas) {
+        const target = (canvas.offsetWidth * currentScale - vp.clientWidth) / 2;
+        vp.scrollTo({ left: Math.max(0, target), behavior: 'smooth' });
+      }
+    }
+
+    function scrollToLeft() {
+      const vp = document.getElementById('mindmap-viewport');
+      if (vp) vp.scrollTo({ left: 0, behavior: 'smooth' });
+    }
+
+    function scrollToRight() {
+      const vp = document.getElementById('mindmap-viewport');
+      const canvas = document.getElementById('mindmap-canvas');
+      if (vp && canvas) {
+        vp.scrollTo({ left: canvas.offsetWidth * currentScale, behavior: 'smooth' });
+      }
+    }
+
+    // 支援滑鼠按住背景平移畫布 (Mouse Drag to Pan)
+    function initPanning() {
+      const vp = document.getElementById('mindmap-viewport');
+      let isDown = false;
+      let startX, startY, sLeft, sTop;
+
+      vp.addEventListener('mousedown', (e) => {
+        // 點在卡片、按鈕、輸入框或藝術品徽章上不觸發畫布平移
+        if (e.target.closest('.gray-word-card') || e.target.closest('.drop-slot') || e.target.closest('button') || e.target.closest('input') || e.target.closest('.art-photo-badge') || e.target.closest('#canvas-toolbar')) return;
+        isDown = true;
+        vp.style.cursor = 'grabbing';
+        startX = e.pageX - vp.offsetLeft;
+        startY = e.pageY - vp.offsetTop;
+        sLeft = vp.scrollLeft;
+        sTop = vp.scrollTop;
+      });
+
+      window.addEventListener('mouseup', () => {
+        if (!isDown) return;
+        isDown = false;
+        vp.style.cursor = 'default';
+      });
+
+      vp.addEventListener('mousemove', (e) => {
+        if (!isDown) return;
+        e.preventDefault();
+        const x = e.pageX - vp.offsetLeft;
+        const y = e.pageY - vp.offsetTop;
+        vp.scrollLeft = sLeft - (x - startX) * 1.3;
+        vp.scrollTop = sTop - (y - startY) * 1.3;
+      });
+    }
+
     // 初始化載入
     window.addEventListener('DOMContentLoaded', () => {
       drawLines();
       initCardBank();
       initSlots();
-      window.addEventListener('resize', drawLines);
+      initPanning();
+      window.addEventListener('resize', () => {
+        drawLines();
+      });
+      // 頁面加載完成後平滑置中到「第七課」中心核心
+      setTimeout(scrollToCenter, 150);
     });
   </script>
 </body>
