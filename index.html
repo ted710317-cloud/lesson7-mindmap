@@ -339,7 +339,7 @@
       border-radius: 28px;
       border: 2px solid #e2e8f0;
       box-shadow: 0 14px 40px rgba(0,0,0,0.05);
-      transform-origin: top center;
+      transform-origin: top left;
       transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1);
     }
 
@@ -1491,10 +1491,10 @@
 
     function fitToScreen() {
       const vp = document.getElementById('mindmap-viewport');
-      const availableWidth = vp.clientWidth - 80;
+      const availableWidth = vp.clientWidth - 40;
       const scale = availableWidth / 2260;
       setZoom(scale);
-      vp.scrollTo({ left: 0, behavior: 'smooth' });
+      vp.scrollTo({ left: 0, top: 0, behavior: 'smooth' });
       showToast('🖥️ 已自動縮放適配全螢幕！');
     }
 
@@ -1516,7 +1516,8 @@
       const vp = document.getElementById('mindmap-viewport');
       const canvas = document.getElementById('mindmap-canvas');
       if (vp && canvas) {
-        vp.scrollTo({ left: canvas.offsetWidth * currentScale, behavior: 'smooth' });
+        const target = Math.max(0, canvas.offsetWidth * currentScale - vp.clientWidth + 80);
+        vp.scrollTo({ left: target, behavior: 'smooth' });
       }
     }
 
@@ -2152,10 +2153,10 @@
 
     function fitToScreen() {
       const vp = document.getElementById('mindmap-viewport');
-      const availableWidth = vp.clientWidth - 80;
+      const availableWidth = vp.clientWidth - 40;
       const scale = availableWidth / 2260;
       setZoom(scale);
-      vp.scrollTo({ left: 0, behavior: 'smooth' });
+      vp.scrollTo({ left: 0, top: 0, behavior: 'smooth' });
       showToast('🖥️ 已自動縮放適配全螢幕！');
     }
 
@@ -2177,7 +2178,8 @@
       const vp = document.getElementById('mindmap-viewport');
       const canvas = document.getElementById('mindmap-canvas');
       if (vp && canvas) {
-        vp.scrollTo({ left: canvas.offsetWidth * currentScale, behavior: 'smooth' });
+        const target = Math.max(0, canvas.offsetWidth * currentScale - vp.clientWidth + 80);
+        vp.scrollTo({ left: target, behavior: 'smooth' });
       }
     }
 
