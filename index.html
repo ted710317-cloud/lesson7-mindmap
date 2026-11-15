@@ -340,7 +340,7 @@
       border: 2px solid #e2e8f0;
       box-shadow: 0 14px 40px rgba(0,0,0,0.05);
       transform-origin: top left;
-      transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1);
+      /* 移除過渡以保證縮放與連線即時同步無抖動 */
     }
 
     /* 畫布導航與縮放浮動工具列 */
@@ -405,8 +405,8 @@
       position: absolute;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
+      width: 2260px;
+      height: 1280px;
       pointer-events: none;
       z-index: 1;
     }
@@ -940,7 +940,7 @@
     <div class="mindmap-scroll-container">
       <div id="mindmap-canvas">
         <!-- SVG 曲線層 -->
-        <svg id="svg-connections"></svg>
+        <svg id="svg-connections" width="2260" height="1280" viewBox="0 0 2260 1280"></svg>
 
         <!-- 中心主題節點 (1130, 640) -->
         <div class="mm-node node-center" id="n_center">
@@ -1241,11 +1241,16 @@
       setTimeout(drawLines, 100);
     }
 
-    // 繪製 Coggle 風格貝茲連線
+    // 繪製 Coggle 風格貝茲連線 (依據 2260x1280 畫布精確座標，完美支援 iPad 及任意縮放比)
     function drawLines() {
       const svg = document.getElementById('svg-connections');
+      const canvas = document.getElementById('mindmap-canvas');
+      if (!svg || !canvas) return;
+
       svg.innerHTML = '';
-      const canvasRect = document.getElementById('mindmap-canvas').getBoundingClientRect();
+      const canvasRect = canvas.getBoundingClientRect();
+      const scaleX = (canvasRect.width / 2260) || currentScale || 1.0;
+      const scaleY = (canvasRect.height / 1280) || currentScale || 1.0;
 
       function connect(id1, id2, color, strokeWidth = 4, isDashed = false) {
         const el1 = document.getElementById(id1);
@@ -1255,24 +1260,33 @@
         const r1 = el1.getBoundingClientRect();
         const r2 = el2.getBoundingClientRect();
 
-        let x1, y1, x2, y2;
-        if (r1.left < r2.left) {
-          x1 = r1.right - canvasRect.left;
-          x2 = r2.left - canvasRect.left;
+        // 轉換為未縮放的 2260x1280 畫布內部原始座標
+        const x1_left = (r1.left - canvasRect.left) / scaleX;
+        const x1_right = (r1.right - canvasRect.left) / scaleX;
+        const y1_mid = ((r1.top + r1.bottom) / 2 - canvasRect.top) / scaleY;
+
+        const x2_left = (r2.left - canvasRect.left) / scaleX;
+        const x2_right = (r2.right - canvasRect.left) / scaleX;
+        const y2_mid = ((r2.top + r2.bottom) / 2 - canvasRect.top) / scaleY;
+
+        let x1, x2;
+        if (x1_left < x2_left) {
+          x1 = x1_right;
+          x2 = x2_left;
         } else {
-          x1 = r1.left - canvasRect.left;
-          x2 = r2.right - canvasRect.left;
+          x1 = x1_left;
+          x2 = x2_right;
         }
-        y1 = (r1.top + r1.bottom) / 2 - canvasRect.top;
-        y2 = (r2.top + r2.bottom) / 2 - canvasRect.top;
+        const y1 = y1_mid;
+        const y2 = y2_mid;
 
         const dx = Math.abs(x2 - x1) * 0.5;
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         let d;
         if (x1 < x2) {
-          d = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
+          d = `M ${x1.toFixed(1)} ${y1.toFixed(1)} C ${(x1 + dx).toFixed(1)} ${y1.toFixed(1)}, ${(x2 - dx).toFixed(1)} ${y2.toFixed(1)}, ${x2.toFixed(1)} ${y2.toFixed(1)}`;
         } else {
-          d = `M ${x1} ${y1} C ${x1 - dx} ${y1}, ${x2 + dx} ${y2}, ${x2} ${y2}`;
+          d = `M ${x1.toFixed(1)} ${y1.toFixed(1)} C ${(x1 - dx).toFixed(1)} ${y1.toFixed(1)}, ${(x2 + dx).toFixed(1)} ${y2.toFixed(1)}, ${x2.toFixed(1)} ${y2.toFixed(1)}`;
         }
 
         path.setAttribute('d', d);
@@ -1435,6 +1449,7 @@
             slot.innerText = slot.dataset.origText;
             playAudio('select');
             updateProgress();
+            requestAnimationFrame(drawLines);
             showToast(`已退回「${word}」至上方詞庫`);
           }
         };
@@ -1466,6 +1481,7 @@
         // 放對了！即時點亮專屬色彩！
         slot.innerText = wordText;
         slot.classList.add('lighted', `color-${slot.dataset.color}`);
+        requestAnimationFrame(drawLines);
         playAudio('correct');
         if ('vibrate' in navigator) navigator.vibrate(50);
 
@@ -1570,749 +1586,7 @@
       const guideBar = document.getElementById('touch-guide-bar');
       if (guideBar) guideBar.classList.remove('active');
       updateProgress();
-      showToast('已全部重置！');
-    }
-
-    // 通關彩帶慶祝
-    function triggerVictory() {
-      playAudio('fanfare');
-      if (window.confetti) {
-        confetti({ particleCount: 140, spread: 90, origin: { y: 0.6 } });
-        setTimeout(() => confetti({ particleCount: 90, spread: 110, origin: { y: 0.4 } }), 400);
-      }
-      setTimeout(() => {
-        alert('🎉 太棒了！全班全對！29 個關鍵詞全部點亮成功！\n\n整座《跟著公共藝術去旅行》心智圖已完整綻放！\n請點擊右上角「下載心智圖 (PDF)」下載您的學習成果！');
-      }, 500);
-    }
-
-    // 藝術品 Lightbox 視窗
-    function openLightbox(key) {
-      const info = ARTWORKS_INFO[key];
-      if (!info) return;
-      document.getElementById('lightbox-img').src = info.img;
-      document.getElementById('lightbox-title').innerText = info.title;
-      document.getElementById('lightbox-desc').innerText = info.desc;
-      document.getElementById('lightbox-modal').classList.add('active');
-      playAudio('select');
-    }
-    function closeLightbox() {
-      document.getElementById('lightbox-modal').classList.remove('active');
-    }
-
-    // 一鍵匯出 A4 橫向 PDF
-    async function exportToPDF() {
-      const name = document.getElementById('stu-name').value.trim() || '學生';
-      const seat = document.getElementById('stu-seat').value.trim() || '01';
-      const className = document.getElementById('stu-class').value.trim() || '六年一班';
-      const fileName = `${className}_${seat}號_${name}_第七課心智圖成果.pdf`;
-
-      if (window.html2canvas && window.jspdf) {
-        const btn = document.querySelector('.btn-pdf');
-        const origText = btn.innerText;
-        btn.innerText = '⏳ 生成 PDF 中...';
-        btn.disabled = true;
-
-        try {
-          const canvasEl = document.getElementById('mindmap-canvas');
-          const canvas = await html2canvas(canvasEl, {
-            scale: 2,
-            useCORS: true,
-            backgroundColor: '#ffffff'
-          });
-
-          const imgData = canvas.toDataURL('image/jpeg', 0.95);
-          const { jsPDF } = window.jspdf;
-          const pdf = new jsPDF({
-            orientation: 'landscape',
-            unit: 'mm',
-            format: 'a4'
-          });
-
-          const pdfW = pdf.internal.pageSize.getWidth();
-          const pdfH = pdf.internal.pageSize.getHeight();
-
-          // 標頭學生資訊
-          pdf.setFontSize(13);
-          pdf.setTextColor(30, 41, 59);
-          pdf.text(`翰林六上國語 第七課《跟著公共藝術去旅行》心智圖 | 班級：${className} 座號：${seat} 姓名：${name}`, 14, 11);
-
-          // 配合橫向比例縮放
-          const ratio = canvas.width / canvas.height;
-          let drawW = pdfW - 16;
-          let drawH = drawW / ratio;
-          if (drawH > pdfH - 18) {
-            drawH = pdfH - 18;
-            drawW = drawH * ratio;
-          }
-          const posX = (pdfW - drawW) / 2;
-          const posY = 15;
-
-          pdf.addImage(imgData, 'JPEG', posX, posY, drawW, drawH);
-          pdf.save(fileName);
-          playAudio('fanfare');
-          showToast(`✅ 已成功下載 ${fileName}！`);
-        } catch (e) {
-          console.error(e);
-          window.print();
-        } finally {
-          btn.innerText = origText;
-          btn.disabled = false;
-        }
-      } else {
-        window.print();
-      }
-    }
-
-    // ============================================================
-    // 【視角平移、縮放與 iPad 觸控手勢控制】
-    // ============================================================
-    let currentScale = 1.0;
-
-    function setZoom(scale) {
-      currentScale = Math.min(Math.max(scale, 0.4), 1.5);
-      const canvas = document.getElementById('mindmap-canvas');
-      canvas.style.transform = `scale(${currentScale})`;
-      document.getElementById('zoom-val-text').innerText = `${Math.round(currentScale * 100)}%`;
-      setTimeout(drawLines, 80);
-    }
-
-    function zoomIn() {
-      setZoom(currentScale + 0.1);
-    }
-
-    function zoomOut() {
-      setZoom(currentScale - 0.1);
-    }
-
-    function resetZoom() {
-      setZoom(1.0);
-      scrollToCenter();
-    }
-
-    function fitToScreen() {
-      const vp = document.getElementById('mindmap-viewport');
-      const availableWidth = vp.clientWidth - 40;
-      const scale = availableWidth / 2260;
-      setZoom(scale);
-      vp.scrollTo({ left: 0, top: 0, behavior: 'smooth' });
-      showToast('🖥️ 已自動縮放適配全螢幕！');
-    }
-
-    function scrollToCenter() {
-      const vp = document.getElementById('mindmap-viewport');
-      const canvas = document.getElementById('mindmap-canvas');
-      if (vp && canvas) {
-        const target = (canvas.offsetWidth * currentScale - vp.clientWidth) / 2;
-        vp.scrollTo({ left: Math.max(0, target), behavior: 'smooth' });
-      }
-    }
-
-    function scrollToLeft() {
-      const vp = document.getElementById('mindmap-viewport');
-      if (vp) vp.scrollTo({ left: 0, behavior: 'smooth' });
-    }
-
-    function scrollToRight() {
-      const vp = document.getElementById('mindmap-viewport');
-      const canvas = document.getElementById('mindmap-canvas');
-      if (vp && canvas) {
-        const target = Math.max(0, canvas.offsetWidth * currentScale - vp.clientWidth + 80);
-        vp.scrollTo({ left: target, behavior: 'smooth' });
-      }
-    }
-
-    // 支援滑鼠按住背景平移畫布 (Mouse Drag to Pan)
-    function initPanning() {
-      const vp = document.getElementById('mindmap-viewport');
-      let isDown = false;
-      let startX, startY, sLeft, sTop;
-
-      vp.addEventListener('mousedown', (e) => {
-        if (e.target.closest('.gray-word-card') || e.target.closest('.drop-slot') || e.target.closest('button') || e.target.closest('input') || e.target.closest('.art-photo-badge') || e.target.closest('#canvas-toolbar')) return;
-        isDown = true;
-        vp.style.cursor = 'grabbing';
-        startX = e.pageX - vp.offsetLeft;
-        startY = e.pageY - vp.offsetTop;
-        sLeft = vp.scrollLeft;
-        sTop = vp.scrollTop;
-      });
-
-      window.addEventListener('mouseup', () => {
-        if (!isDown) return;
-        isDown = false;
-        vp.style.cursor = 'default';
-      });
-
-      vp.addEventListener('mousemove', (e) => {
-        if (!isDown) return;
-        e.preventDefault();
-        const x = e.pageX - vp.offsetLeft;
-        const y = e.pageY - vp.offsetTop;
-        vp.scrollLeft = sLeft - (x - startX) * 1.3;
-        vp.scrollTop = sTop - (y - startY) * 1.3;
-      });
-    }
-
-    // iPad 雙指縮放 (Pinch-to-Zoom) 觸控手勢監聽
-    function initTouchGestures() {
-      const vp = document.getElementById('mindmap-viewport');
-      let initialDist = null;
-      let initialScale = 1.0;
-
-      vp.addEventListener('touchstart', (e) => {
-        if (e.touches.length === 2) {
-          initialDist = Math.hypot(
-            e.touches[0].pageX - e.touches[1].pageX,
-            e.touches[0].pageY - e.touches[1].pageY
-          );
-          initialScale = currentScale;
-        }
-      }, { passive: true });
-
-      vp.addEventListener('touchmove', (e) => {
-        if (e.touches.length === 2 && initialDist) {
-          const currentDist = Math.hypot(
-            e.touches[0].pageX - e.touches[1].pageX,
-            e.touches[0].pageY - e.touches[1].pageY
-          );
-          const factor = currentDist / initialDist;
-          setZoom(initialScale * factor);
-        }
-      }, { passive: true });
-
-      vp.addEventListener('touchend', (e) => {
-        if (e.touches.length < 2) {
-          initialDist = null;
-        }
-      });
-    }
-
-    // 依據裝置螢幕寬度自動決定最佳預設視角
-    function autoFitForScreen() {
-      const vp = document.getElementById('mindmap-viewport');
-      // 若為 iPad / 平板 (寬度 <= 1366px)，預設直接啟用「全景適配」，一眼看完整張圖！
-      if (window.innerWidth <= 1366) {
-        fitToScreen();
-      } else {
-        scrollToCenter();
-      }
-    }
-
-    // 初始化載入
-    window.addEventListener('DOMContentLoaded', () => {
-      drawLines();
-      initCardBank();
-      initSlots();
-      initPanning();
-      initTouchGestures();
-
-      window.addEventListener('resize', () => {
-        drawLines();
-      });
-
-      // 載入後自動針對裝置呈現最佳視角
-      setTimeout(autoFitForScreen, 150);
-    });
-  </script>
-</body>
-</html>
-
-  <!-- ============================================================
-       【藝術品彈窗 (Lightbox Modal)】
-       ============================================================ -->
-  <div class="lightbox-modal" id="lightbox-modal" onclick="closeLightbox(event)">
-    <div class="lightbox-card" onclick="event.stopPropagation()">
-      <button class="lightbox-close" onclick="closeLightbox()">✕</button>
-      <img id="lightbox-img" src="" alt="公共藝術品">
-      <h3 class="lightbox-title" id="lightbox-title">作品名稱</h3>
-      <p class="lightbox-desc" id="lightbox-desc">詳細介紹文字</p>
-    </div>
-  </div>
-
-  <!-- 浮動 Toast -->
-  <div id="toast-msg">提示訊息</div>
-
-  <!-- ============================================================
-       【JavaScript 互動核心邏輯】
-       ============================================================ -->
-  <script>
-    // 29 個完整課文心智圖關鍵詞數據
-    const KEYWORDS_DATA = [
-      // 起因 (red - 3)
-      { id: 'k1', text: '阿姨介紹大地之書', cat: 'red' },
-      { id: 'k2', text: '對公共藝術不太了解', cat: 'red' },
-      { id: 'k3', text: '公共藝術之旅', cat: 'red' },
-
-      // 經過一：花間小鹿 (magenta - 6)
-      { id: 'k4', text: '嘉義觸口遊客中心', cat: 'magenta' },
-      { id: 'k5', text: '金屬光澤', cat: 'magenta' },
-      { id: 'k6', text: '布滿花朵', cat: 'magenta' },
-      { id: 'k7', text: '昂揚的鹿角', cat: 'magenta' },
-      { id: 'k8', text: '取材地點設置', cat: 'magenta' },
-      { id: 'k9', text: '認識鄒族傳說', cat: 'magenta' },
-
-      // 經過二：分合隨緣 (purple - 5)
-      { id: 'k10', text: '臺南市美術館', cat: 'purple' },
-      { id: 'k11', text: '不鏽鋼', cat: 'purple' },
-      { id: 'k12', text: '凹凸鏡面', cat: 'purple' },
-      { id: 'k13', text: '觀賞角度不同', cat: 'purple' },
-      { id: 'k14', text: '呈現分合的面貌', cat: 'purple' },
-
-      // 經過三：參觀美術館 (blue - 2)
-      { id: 'k15', text: '輕聲細語', cat: 'blue' },
-      { id: 'k16', text: '體會藝術家傳達的意思', cat: 'blue' },
-
-      // 結果—爸媽的說明 (teal - 6)
-      { id: 'k17', text: '陽明交通大學附設醫院蘭陽院區', cat: 'teal' },
-      { id: 'k18', text: '植物細部紋理', cat: 'teal' },
-      { id: 'k19', text: '青銅雕塑', cat: 'teal' },
-      { id: 'k20', text: '彷彿能閱讀的書', cat: 'teal' },
-      { id: 'k21', text: '提醒留意植物之美', cat: 'teal' },
-      { id: 'k22', text: '不用輕聲細語接觸藝術品', cat: 'teal' },
-
-      // 迴響 (green - 7)
-      { id: 'k23', text: '恍然大悟', cat: 'green' },
-      { id: 'k24', text: '分合隨緣', cat: 'green' },
-      { id: 'k25', text: '時空更迭變換', cat: 'green' },
-      { id: 'k26', text: '始終可接觸互動', cat: 'green' },
-      { id: 'k27', text: '公共藝術', cat: 'green' },
-      { id: 'k28', text: '引領我們接近觀看', cat: 'green' },
-      { id: 'k29', text: '在藝術世界中旅行', cat: 'green' }
-    ];
-
-    // 三大公共藝術品寫真資料
-    const ARTWORKS_INFO = {
-      deer: {
-        title: '《花間小鹿》賴亭玟、馬君輔 作品',
-        desc: '位於嘉義縣番路鄉觸口遊客中心草坪。作品由不鏽鋼與金屬打造，結合阿里山花季的花朵圖騰與鄒族逐鹿獵鹿傳說，昂揚的鹿角與金屬光澤在陽光下格外亮麗。',
-        img: 'artwork_deer.jpg'
-      },
-      mirror: {
-        title: '《分合隨緣》不鏽鋼鏡面公共藝術',
-        desc: '位於臺南市美術館二館戶外。作品運用不鏽鋼凹凸鏡面的曲面反射，隨著觀賞者走近與不同角度的移動，周遭街景與身影產生重疊、分開與變換，呈現分合隨緣的哲學趣味。',
-        img: 'artwork_mirror.jpg'
-      },
-      book: {
-        title: '《大地之書》黃銘哲 戶外青銅公共藝術',
-        desc: '位於國立陽明交通大學附設醫院蘭陽院區。作品以巨大的青銅書卷展開，頁面精細拓印蕨類與在地植物細部紋理，是一件可以自由走近觸摸、感受大自然生命力的大地之書。',
-        img: 'artwork_book.jpg'
-      }
-    };
-
-    let selectedBankCard = null;
-    let audioContext = null;
-
-    // Web Audio 合成音效
-    function playAudio(type) {
-      try {
-        if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const now = audioContext.currentTime;
-
-        if (type === 'select') {
-          const osc = audioContext.createOscillator();
-          const gain = audioContext.createGain();
-          osc.connect(gain);
-          gain.connect(audioContext.destination);
-          osc.frequency.setValueAtTime(480, now);
-          gain.gain.setValueAtTime(0.08, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
-          osc.start(now);
-          osc.stop(now + 0.08);
-        } else if (type === 'correct') {
-          // 清脆「叮咚」亮音
-          [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {
-            const osc = audioContext.createOscillator();
-            const gain = audioContext.createGain();
-            osc.connect(gain);
-            gain.connect(audioContext.destination);
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(freq, now + idx * 0.06);
-            gain.gain.setValueAtTime(0.12, now + idx * 0.06);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.22);
-            osc.start(now + idx * 0.06);
-            osc.stop(now + idx * 0.06 + 0.22);
-          });
-        } else if (type === 'wrong') {
-          // 錯誤輕鈍音
-          const osc = audioContext.createOscillator();
-          const gain = audioContext.createGain();
-          osc.connect(gain);
-          gain.connect(audioContext.destination);
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(260, now);
-          osc.frequency.exponentialRampToValueAtTime(140, now + 0.18);
-          gain.gain.setValueAtTime(0.12, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
-          osc.start(now);
-          osc.stop(now + 0.18);
-        } else if (type === 'fanfare') {
-          // 通關音效
-          [523, 659, 783, 1046, 1318].forEach((freq, idx) => {
-            const osc = audioContext.createOscillator();
-            const gain = audioContext.createGain();
-            osc.connect(gain);
-            gain.connect(audioContext.destination);
-            osc.frequency.setValueAtTime(freq, now + idx * 0.09);
-            gain.gain.setValueAtTime(0.2, now + idx * 0.09);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.09 + 0.4);
-            osc.start(now + idx * 0.09);
-            osc.stop(now + idx * 0.09 + 0.4);
-          });
-        }
-      } catch (e) {}
-    }
-
-    // 顯示 Toast 訊息
-    function showToast(msg) {
-      const toast = document.getElementById('toast-msg');
-      toast.innerText = msg;
-      toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 2200);
-    }
-
-    // 詞庫收合/展開切換 (iPad 極致釋放螢幕空間)
-    function toggleBankCollapse() {
-      const panel = document.getElementById('top-bank-panel');
-      const btn = document.getElementById('toggle-bank-btn');
-      panel.classList.toggle('collapsed');
-      if (panel.classList.contains('collapsed')) {
-        btn.innerText = '🔽 展開詞庫';
-        showToast('已收合詞庫，給予心智圖最大視野！');
-      } else {
-        btn.innerText = '🔼 收合詞庫';
-      }
-      setTimeout(drawLines, 100);
-    }
-
-    // 繪製 Coggle 風格貝茲連線
-    function drawLines() {
-      const svg = document.getElementById('svg-connections');
-      svg.innerHTML = '';
-      const canvasRect = document.getElementById('mindmap-canvas').getBoundingClientRect();
-
-      function connect(id1, id2, color, strokeWidth = 4, isDashed = false) {
-        const el1 = document.getElementById(id1);
-        const el2 = document.getElementById(id2);
-        if (!el1 || !el2) return;
-
-        const r1 = el1.getBoundingClientRect();
-        const r2 = el2.getBoundingClientRect();
-
-        let x1, y1, x2, y2;
-        if (r1.left < r2.left) {
-          x1 = r1.right - canvasRect.left;
-          x2 = r2.left - canvasRect.left;
-        } else {
-          x1 = r1.left - canvasRect.left;
-          x2 = r2.right - canvasRect.left;
-        }
-        y1 = (r1.top + r1.bottom) / 2 - canvasRect.top;
-        y2 = (r2.top + r2.bottom) / 2 - canvasRect.top;
-
-        const dx = Math.abs(x2 - x1) * 0.5;
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        let d;
-        if (x1 < x2) {
-          d = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
-        } else {
-          d = `M ${x1} ${y1} C ${x1 - dx} ${y1}, ${x2 + dx} ${y2}, ${x2} ${y2}`;
-        }
-
-        path.setAttribute('d', d);
-        path.setAttribute('stroke', color);
-        path.setAttribute('stroke-width', strokeWidth);
-        path.setAttribute('fill', 'none');
-        path.setAttribute('stroke-linecap', 'round');
-        if (isDashed) path.setAttribute('stroke-dasharray', '5 5');
-        svg.appendChild(path);
-      }
-
-      // 中心主幹 (粗主支 7px)
-      connect('n_center', 'b_origin', '#ef4444', 7);
-      connect('n_center', 'b_deer', '#ec4899', 7);
-      connect('n_center', 'b_art2', '#8b5cf6', 7);
-      connect('n_center', 'b_visit', '#3b82f6', 7);
-      connect('n_center', 'b_result', '#06b6d4', 7);
-      connect('n_center', 'b_echo', '#10b981', 7);
-
-      // 起因
-      connect('b_origin', 's_org1', '#ef4444', 3.5, true);
-      connect('b_origin', 's_org2', '#ef4444', 3.5, true);
-      connect('s_org2', 's_org3', '#ef4444', 3, true);
-
-      // 花間小鹿
-      connect('b_deer', 'sub_deer_loc', '#ec4899', 4);
-      connect('b_deer', 'sub_deer_app', '#ec4899', 4);
-      connect('b_deer', 'sub_deer_mea', '#ec4899', 4);
-      connect('sub_deer_loc', 's_deer_loc1', '#ec4899', 3, true);
-      connect('sub_deer_app', 's_deer_app1', '#ec4899', 3, true);
-      connect('sub_deer_app', 's_deer_app2', '#ec4899', 3, true);
-      connect('sub_deer_app', 's_deer_app3', '#ec4899', 3, true);
-      connect('sub_deer_mea', 's_deer_mea1', '#ec4899', 3, true);
-      connect('sub_deer_mea', 's_deer_mea2', '#ec4899', 3, true);
-
-      // 分合隨緣
-      connect('b_art2', 'sub_art2_loc', '#8b5cf6', 4);
-      connect('b_art2', 'sub_art2_app', '#8b5cf6', 4);
-      connect('b_art2', 'sub_art2_mea', '#8b5cf6', 4);
-      connect('sub_art2_loc', 's_art2_loc1', '#8b5cf6', 3, true);
-      connect('sub_art2_app', 's_art2_app1', '#8b5cf6', 3, true);
-      connect('sub_art2_app', 's_art2_app2', '#8b5cf6', 3, true);
-      connect('sub_art2_mea', 's_art2_mea1', '#8b5cf6', 3, true);
-      connect('s_art2_mea1', 's_art2_mea2', '#8b5cf6', 3, true);
-
-      // 迴響
-      connect('b_echo', 's_ec1_1', '#10b981', 3.5, true);
-      connect('s_ec1_1', 's_ec1_2', '#10b981', 3, true);
-      connect('s_ec1_2', 's_ec1_3', '#10b981', 3, true);
-      connect('s_ec1_3', 's_ec1_4', '#10b981', 3, true);
-
-      connect('b_echo', 's_ec2_1', '#10b981', 3.5, true);
-      connect('s_ec2_1', 's_ec2_2', '#10b981', 3, true);
-      connect('s_ec2_2', 's_ec2_3', '#10b981', 3, true);
-
-      // 結果—爸媽的說明
-      connect('b_result', 'sub_book_mom', '#06b6d4', 4);
-      connect('b_result', 'sub_deer_dad', '#06b6d4', 4);
-      connect('sub_book_mom', 'sub_res_loc', '#06b6d4', 3.5);
-      connect('sub_book_mom', 'sub_res_app', '#06b6d4', 3.5);
-      connect('sub_book_mom', 'sub_res_mea', '#06b6d4', 3.5);
-
-      connect('sub_res_loc', 's_res_loc1', '#06b6d4', 3, true);
-      connect('sub_res_app', 's_res_app1', '#06b6d4', 3, true);
-      connect('sub_res_app', 's_res_app2', '#06b6d4', 3, true);
-      connect('sub_res_app', 's_res_app3', '#06b6d4', 3, true);
-      connect('sub_res_mea', 's_res_mea1', '#06b6d4', 3, true);
-      connect('sub_res_mea', 's_res_mea2', '#06b6d4', 3, true);
-
-      // 參觀美術館
-      connect('b_visit', 'sub_dad_warn', '#3b82f6', 4);
-      connect('b_visit', 'sub_mom_explain', '#3b82f6', 4);
-      connect('sub_dad_warn', 's_dad_slot', '#3b82f6', 3, true);
-      connect('sub_mom_explain', 's_mom_slot', '#3b82f6', 3, true);
-    }
-
-    // 初始化頂部關鍵詞庫
-    function initCardBank() {
-      const container = document.getElementById('cards-flow-area');
-      container.innerHTML = '';
-
-      KEYWORDS_DATA.forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'gray-word-card';
-        card.id = `card-${item.id}`;
-        card.draggable = true;
-        card.innerText = item.text;
-        card.dataset.text = item.text;
-        card.dataset.cat = item.cat;
-
-        // 點擊選取（iPad 觸控最核心）
-        card.onclick = (e) => {
-          e.stopPropagation();
-          toggleSelectCard(card);
-        };
-
-        // 拖曳處理
-        card.ondragstart = (e) => {
-          e.dataTransfer.setData('text/plain', item.text);
-          card.classList.add('selected');
-        };
-        card.ondragend = () => {
-          card.classList.remove('selected');
-        };
-
-        container.appendChild(card);
-      });
-
-      updateProgress();
-    }
-
-    // 選取卡片切換與 iPad 指引燈光連動
-    function toggleSelectCard(card) {
-      const guideBar = document.getElementById('touch-guide-bar');
-      const unplacedSlots = document.querySelectorAll('.drop-slot:not(.lighted)');
-
-      if (selectedBankCard === card) {
-        card.classList.remove('selected');
-        selectedBankCard = null;
-        unplacedSlots.forEach(s => s.classList.remove('guide-pulse'));
-        if (guideBar) guideBar.classList.remove('active');
-      } else {
-        if (selectedBankCard) selectedBankCard.classList.remove('selected');
-        selectedBankCard = card;
-        card.classList.add('selected');
-        playAudio('select');
-
-        // iPad 呼吸引導燈光與提示條
-        unplacedSlots.forEach(s => s.classList.add('guide-pulse'));
-        if (guideBar) {
-          guideBar.innerText = `👉 已選取「${card.dataset.text}」，請直接點擊下方框格！`;
-          guideBar.classList.add('active');
-        }
-      }
-    }
-
-    // 綁定 Slot 點擊與拖放驗證
-    function initSlots() {
-      const slots = document.querySelectorAll('.drop-slot');
-      slots.forEach(slot => {
-        slot.dataset.origText = slot.innerText;
-
-        // 點擊 Slot 動作（iPad 觸控操作核心）
-        slot.onclick = () => {
-          if (selectedBankCard) {
-            handleDropOrSelect(selectedBankCard.dataset.text, slot);
-            if (selectedBankCard) {
-              selectedBankCard.classList.remove('selected');
-              selectedBankCard = null;
-            }
-            // 清除引導燈光
-            document.querySelectorAll('.drop-slot').forEach(s => s.classList.remove('guide-pulse'));
-            const guideBar = document.getElementById('touch-guide-bar');
-            if (guideBar) guideBar.classList.remove('active');
-          } else if (slot.classList.contains('lighted')) {
-            // 已點亮之卡片，點擊可退回上方詞庫重新思考
-            const word = slot.innerText;
-            returnCardToBank(word);
-            slot.classList.remove('lighted', `color-${slot.dataset.color}`);
-            slot.innerText = slot.dataset.origText;
-            playAudio('select');
-            updateProgress();
-            showToast(`已退回「${word}」至上方詞庫`);
-          }
-        };
-
-        // 拖曳事件
-        slot.ondragover = (e) => {
-          e.preventDefault();
-          slot.classList.add('drag-over');
-        };
-        slot.ondragleave = () => {
-          slot.classList.remove('drag-over');
-        };
-        slot.ondrop = (e) => {
-          e.preventDefault();
-          slot.classList.remove('drag-over');
-          const text = e.dataTransfer.getData('text/plain');
-          if (text) {
-            handleDropOrSelect(text, slot);
-          }
-        };
-      });
-    }
-
-    // 核心驗證：放對才變色點亮，放錯溫和震動
-    function handleDropOrSelect(wordText, slot) {
-      const expected = slot.dataset.ans.trim();
-
-      if (wordText.trim() === expected) {
-        // 放對了！即時點亮專屬色彩！
-        slot.innerText = wordText;
-        slot.classList.add('lighted', `color-${slot.dataset.color}`);
-        playAudio('correct');
-        if ('vibrate' in navigator) navigator.vibrate(50);
-
-        // 隱藏上方該卡片
-        hideCardFromBank(wordText);
-        updateProgress();
-
-        // 檢查是否全部 29 題完成
-        const lightedCount = document.querySelectorAll('.drop-slot.lighted').length;
-        if (lightedCount === KEYWORDS_DATA.length) {
-          triggerVictory();
-        }
-      } else {
-        // 放錯了！溫和晃動提醒，不變色
-        slot.classList.add('shake');
-        playAudio('wrong');
-        if ('vibrate' in navigator) navigator.vibrate([100, 50, 100]);
-        showToast('再想想看喔！這個關鍵詞不是放在這裡～');
-        setTimeout(() => slot.classList.remove('shake'), 500);
-      }
-    }
-
-    // 隱藏已放上的卡片
-    function hideCardFromBank(text) {
-      const card = Array.from(document.querySelectorAll('.gray-word-card')).find(c => c.dataset.text === text);
-      if (card) card.style.display = 'none';
-    }
-
-    // 退回卡片至詞庫
-    function returnCardToBank(text) {
-      const card = Array.from(document.querySelectorAll('.gray-word-card')).find(c => c.dataset.text === text);
-      if (card) card.style.display = 'inline-flex';
-    }
-
-    // 更新進度條與文字
-    function updateProgress() {
-      const lightedCount = document.querySelectorAll('.drop-slot.lighted').length;
-      const total = KEYWORDS_DATA.length;
-      const pct = Math.round((lightedCount / total) * 100);
-
-      document.getElementById('progress-bar-fill').style.width = `${pct}%`;
-      document.getElementById('progress-text').innerText = `已點亮：${lightedCount} / ${total} (${pct}%)`;
-    }
-
-    // 分類篩選
-    function filterTab(cat, btn) {
-      document.querySelectorAll('.tab-pill').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-
-      const cards = document.querySelectorAll('.gray-word-card');
-      cards.forEach(card => {
-        const isPlaced = Array.from(document.querySelectorAll('.drop-slot.lighted')).some(s => s.innerText === card.dataset.text);
-        if (isPlaced) {
-          card.style.display = 'none';
-          return;
-        }
-
-        if (cat === 'all' || card.dataset.cat === cat) {
-          card.style.display = 'inline-flex';
-        } else {
-          card.style.display = 'none';
-        }
-      });
-    }
-
-    // 洗牌打散詞彙
-    function shuffleCards() {
-      const container = document.getElementById('cards-flow-area');
-      const cards = Array.from(container.children);
-      cards.sort(() => Math.random() - 0.5);
-      cards.forEach(card => container.appendChild(card));
-      playAudio('select');
-      showToast('🎲 關鍵詞已隨機打散！');
-    }
-
-    // 提示下一步
-    function showHint() {
-      const unplacedSlots = Array.from(document.querySelectorAll('.drop-slot')).filter(s => !s.classList.contains('lighted'));
-      if (unplacedSlots.length === 0) {
-        showToast('🎉 全部都已經完成囉！');
-        return;
-      }
-      const targetSlot = unplacedSlots[0];
-      targetSlot.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      targetSlot.style.boxShadow = '0 0 24px #3b82f6';
-      setTimeout(() => targetSlot.style.boxShadow = '', 1500);
-      showToast(`💡 提示：找找看「${targetSlot.dataset.ans}」放在哪裡喔！`);
-    }
-
-    // 全部重置
-    function resetAll() {
-      if (!confirm('確定要清空所有已點亮卡片，重新挑戰嗎？')) return;
-      document.querySelectorAll('.drop-slot').forEach(slot => {
-        slot.classList.remove('lighted', 'color-red', 'color-magenta', 'color-purple', 'color-blue', 'color-teal', 'color-green', 'guide-pulse');
-        slot.innerText = slot.dataset.origText;
-      });
-      document.querySelectorAll('.gray-word-card').forEach(card => {
-        card.style.display = 'inline-flex';
-        card.classList.remove('selected');
-      });
-      selectedBankCard = null;
-      const guideBar = document.getElementById('touch-guide-bar');
-      if (guideBar) guideBar.classList.remove('active');
-      updateProgress();
+      requestAnimationFrame(drawLines);
       showToast('已全部重置！');
     }
 
