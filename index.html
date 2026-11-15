@@ -689,6 +689,168 @@
       transform: translateX(-50%) translateY(0);
     }
 
+    /* ============================================================
+       【iPad / 平板觸控專屬介面優化】
+       ============================================================ */
+    * {
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      overscroll-behavior-y: none;
+    }
+
+    /* 詞庫收合/展開樣式 */
+    #top-bank-panel.collapsed .cards-flow-area,
+    #top-bank-panel.collapsed .filter-row {
+      display: none !important;
+    }
+    #top-bank-panel.collapsed {
+      padding-bottom: 8px !important;
+    }
+
+    .btn-toggle-bank {
+      background: #eff6ff;
+      border: 1.5px solid #93c5fd;
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #1d4ed8;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .btn-toggle-bank:hover {
+      background: #dbeafe;
+    }
+
+    /* 觸控選中卡片時，心智圖目標框格的引導發光動畫 */
+    .drop-slot.guide-pulse:not(.lighted) {
+      border-color: #2563eb !important;
+      background: #eff6ff !important;
+      color: #1d4ed8 !important;
+      animation: slotGuidePulse 1.4s infinite !important;
+    }
+    @keyframes slotGuidePulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.5); transform: translate(-50%, -50%) scale(1); }
+      50% { box-shadow: 0 0 0 8px rgba(37, 99, 235, 0.15); transform: translate(-50%, -50%) scale(1.05); }
+    }
+
+    /* iPad 浮動引導提示條 */
+    #touch-guide-bar {
+      position: fixed;
+      bottom: 82px;
+      left: 50%;
+      transform: translateX(-50%) translateY(120px);
+      background: #2563eb;
+      color: #ffffff;
+      padding: 10px 24px;
+      border-radius: 9999px;
+      font-size: 16px;
+      font-weight: 800;
+      box-shadow: 0 10px 28px rgba(37, 99, 235, 0.35);
+      z-index: 1800;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      white-space: nowrap;
+    }
+    #touch-guide-bar.active {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* iPad / 平板響應式斷點 (螢幕寬度小於 1366px，包含 iPad 10.2 / 10.9 / 11 吋) */
+    @media (max-width: 1366px) {
+      header {
+        padding: 8px 16px;
+      }
+      .brand-section .header-title {
+        font-size: 17px;
+      }
+      .brand-section .badge {
+        font-size: 13px;
+        padding: 4px 10px;
+      }
+      .student-bar {
+        padding: 4px 8px;
+        gap: 6px;
+      }
+      .student-bar label {
+        font-size: 13px;
+      }
+      .student-bar input {
+        font-size: 13px;
+        padding: 3px 6px;
+        width: 65px;
+      }
+      .student-bar input.name-box {
+        width: 85px;
+      }
+      .btn {
+        padding: 6px 11px;
+        font-size: 13px;
+        border-radius: 8px;
+      }
+
+      #top-bank-panel {
+        top: 50px;
+        padding: 8px 16px 10px 16px;
+        gap: 8px;
+      }
+      .bank-main-title {
+        font-size: 15px;
+      }
+      .bank-tip-text {
+        display: none;
+      }
+      .progress-bar-bg {
+        width: 120px;
+        height: 10px;
+      }
+      .progress-text {
+        font-size: 13px;
+        min-width: 105px;
+      }
+      .filter-tabs {
+        gap: 4px;
+      }
+      .tab-pill {
+        padding: 4px 10px;
+        font-size: 12px;
+      }
+      .cards-flow-area {
+        max-height: 84px;
+        gap: 6px;
+      }
+      .gray-word-card {
+        padding: 7px 13px;
+        font-size: 15px;
+        border-radius: 10px;
+      }
+
+      #mindmap-viewport {
+        padding: 12px 16px 80px 16px;
+        touch-action: pan-x pan-y pinch-zoom;
+      }
+
+      #canvas-toolbar {
+        bottom: 14px;
+        right: 14px;
+        padding: 5px 10px;
+        gap: 6px;
+      }
+      .tb-btn {
+        padding: 5px 9px;
+        font-size: 13px;
+      }
+    }
+
     /* 列印與 PDF 匯出最佳化 */
     @media print {
       body { background: #ffffff; }
@@ -739,6 +901,7 @@
     <div class="bank-header-row">
       <div class="bank-title-box">
         <h2 class="bank-main-title">📦 待排序關鍵詞庫（共 29 詞）</h2>
+        <button class="btn-toggle-bank" onclick="toggleBankCollapse()" id="toggle-bank-btn">🔼 收合詞庫</button>
         <span class="bank-tip-text">✨ 提示：點擊卡片 ➔ 點擊心智圖框格飛入！拖對即時點亮專屬色彩！</span>
       </div>
 
@@ -908,6 +1071,9 @@
     </div>
   </div>
 
+  <!-- iPad / 觸控專屬浮動操作指引條 -->
+  <div id="touch-guide-bar">👉 已選取「關鍵詞」，請點擊下方心智圖框格放置！</div>
+
   <!-- ============================================================
        【藝術品彈窗 (Lightbox Modal)】
        ============================================================ -->
@@ -1061,6 +1227,20 @@
       setTimeout(() => toast.classList.remove('show'), 2200);
     }
 
+    // 詞庫收合/展開切換 (iPad 極致釋放螢幕空間)
+    function toggleBankCollapse() {
+      const panel = document.getElementById('top-bank-panel');
+      const btn = document.getElementById('toggle-bank-btn');
+      panel.classList.toggle('collapsed');
+      if (panel.classList.contains('collapsed')) {
+        btn.innerText = '🔽 展開詞庫';
+        showToast('已收合詞庫，給予心智圖最大視野！');
+      } else {
+        btn.innerText = '🔼 收合詞庫';
+      }
+      setTimeout(drawLines, 100);
+    }
+
     // 繪製 Coggle 風格貝茲連線
     function drawLines() {
       const svg = document.getElementById('svg-connections');
@@ -1183,7 +1363,7 @@
         card.dataset.text = item.text;
         card.dataset.cat = item.cat;
 
-        // 點擊選取（平板友善）
+        // 點擊選取（iPad 觸控最核心）
         card.onclick = (e) => {
           e.stopPropagation();
           toggleSelectCard(card);
@@ -1204,16 +1384,28 @@
       updateProgress();
     }
 
-    // 選取卡片切換
+    // 選取卡片切換與 iPad 指引燈光連動
     function toggleSelectCard(card) {
+      const guideBar = document.getElementById('touch-guide-bar');
+      const unplacedSlots = document.querySelectorAll('.drop-slot:not(.lighted)');
+
       if (selectedBankCard === card) {
         card.classList.remove('selected');
         selectedBankCard = null;
+        unplacedSlots.forEach(s => s.classList.remove('guide-pulse'));
+        if (guideBar) guideBar.classList.remove('active');
       } else {
         if (selectedBankCard) selectedBankCard.classList.remove('selected');
         selectedBankCard = card;
         card.classList.add('selected');
         playAudio('select');
+
+        // iPad 呼吸引導燈光與提示條
+        unplacedSlots.forEach(s => s.classList.add('guide-pulse'));
+        if (guideBar) {
+          guideBar.innerText = `👉 已選取「${card.dataset.text}」，請直接點擊下方框格！`;
+          guideBar.classList.add('active');
+        }
       }
     }
 
@@ -1223,7 +1415,7 @@
       slots.forEach(slot => {
         slot.dataset.origText = slot.innerText;
 
-        // 點擊 Slot 動作
+        // 點擊 Slot 動作（iPad 觸控操作核心）
         slot.onclick = () => {
           if (selectedBankCard) {
             handleDropOrSelect(selectedBankCard.dataset.text, slot);
@@ -1231,6 +1423,10 @@
               selectedBankCard.classList.remove('selected');
               selectedBankCard = null;
             }
+            // 清除引導燈光
+            document.querySelectorAll('.drop-slot').forEach(s => s.classList.remove('guide-pulse'));
+            const guideBar = document.getElementById('touch-guide-bar');
+            if (guideBar) guideBar.classList.remove('active');
           } else if (slot.classList.contains('lighted')) {
             // 已點亮之卡片，點擊可退回上方詞庫重新思考
             const word = slot.innerText;
@@ -1271,6 +1467,7 @@
         slot.innerText = wordText;
         slot.classList.add('lighted', `color-${slot.dataset.color}`);
         playAudio('correct');
+        if ('vibrate' in navigator) navigator.vibrate(50);
 
         // 隱藏上方該卡片
         hideCardFromBank(wordText);
@@ -1285,6 +1482,7 @@
         // 放錯了！溫和晃動提醒，不變色
         slot.classList.add('shake');
         playAudio('wrong');
+        if ('vibrate' in navigator) navigator.vibrate([100, 50, 100]);
         showToast('再想想看喔！這個關鍵詞不是放在這裡～');
         setTimeout(() => slot.classList.remove('shake'), 500);
       }
@@ -1361,7 +1559,7 @@
     function resetAll() {
       if (!confirm('確定要清空所有已點亮卡片，重新挑戰嗎？')) return;
       document.querySelectorAll('.drop-slot').forEach(slot => {
-        slot.classList.remove('lighted', 'color-red', 'color-magenta', 'color-purple', 'color-blue', 'color-teal', 'color-green');
+        slot.classList.remove('lighted', 'color-red', 'color-magenta', 'color-purple', 'color-blue', 'color-teal', 'color-green', 'guide-pulse');
         slot.innerText = slot.dataset.origText;
       });
       document.querySelectorAll('.gray-word-card').forEach(card => {
@@ -1369,6 +1567,8 @@
         card.classList.remove('selected');
       });
       selectedBankCard = null;
+      const guideBar = document.getElementById('touch-guide-bar');
+      if (guideBar) guideBar.classList.remove('active');
       updateProgress();
       showToast('已全部重置！');
     }
@@ -1377,8 +1577,8 @@
     function triggerVictory() {
       playAudio('fanfare');
       if (window.confetti) {
-        confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
-        setTimeout(() => confetti({ particleCount: 80, spread: 100, origin: { y: 0.4 } }), 400);
+        confetti({ particleCount: 140, spread: 90, origin: { y: 0.6 } });
+        setTimeout(() => confetti({ particleCount: 90, spread: 110, origin: { y: 0.4 } }), 400);
       }
       setTimeout(() => {
         alert('🎉 太棒了！全班全對！29 個關鍵詞全部點亮成功！\n\n整座《跟著公共藝術去旅行》心智圖已完整綻放！\n請點擊右上角「下載心智圖 (PDF)」下載您的學習成果！');
@@ -1464,16 +1664,16 @@
     }
 
     // ============================================================
-    // 【視角平移、縮放與導航控制】
+    // 【視角平移、縮放與 iPad 觸控手勢控制】
     // ============================================================
     let currentScale = 1.0;
 
     function setZoom(scale) {
-      currentScale = Math.min(Math.max(scale, 0.45), 1.5);
+      currentScale = Math.min(Math.max(scale, 0.4), 1.5);
       const canvas = document.getElementById('mindmap-canvas');
       canvas.style.transform = `scale(${currentScale})`;
       document.getElementById('zoom-val-text').innerText = `${Math.round(currentScale * 100)}%`;
-      setTimeout(drawLines, 100);
+      setTimeout(drawLines, 80);
     }
 
     function zoomIn() {
@@ -1528,7 +1728,6 @@
       let startX, startY, sLeft, sTop;
 
       vp.addEventListener('mousedown', (e) => {
-        // 點在卡片、按鈕、輸入框或藝術品徽章上不觸發畫布平移
         if (e.target.closest('.gray-word-card') || e.target.closest('.drop-slot') || e.target.closest('button') || e.target.closest('input') || e.target.closest('.art-photo-badge') || e.target.closest('#canvas-toolbar')) return;
         isDown = true;
         vp.style.cursor = 'grabbing';
@@ -1554,17 +1753,65 @@
       });
     }
 
+    // iPad 雙指縮放 (Pinch-to-Zoom) 觸控手勢監聽
+    function initTouchGestures() {
+      const vp = document.getElementById('mindmap-viewport');
+      let initialDist = null;
+      let initialScale = 1.0;
+
+      vp.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 2) {
+          initialDist = Math.hypot(
+            e.touches[0].pageX - e.touches[1].pageX,
+            e.touches[0].pageY - e.touches[1].pageY
+          );
+          initialScale = currentScale;
+        }
+      }, { passive: true });
+
+      vp.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 2 && initialDist) {
+          const currentDist = Math.hypot(
+            e.touches[0].pageX - e.touches[1].pageX,
+            e.touches[0].pageY - e.touches[1].pageY
+          );
+          const factor = currentDist / initialDist;
+          setZoom(initialScale * factor);
+        }
+      }, { passive: true });
+
+      vp.addEventListener('touchend', (e) => {
+        if (e.touches.length < 2) {
+          initialDist = null;
+        }
+      });
+    }
+
+    // 依據裝置螢幕寬度自動決定最佳預設視角
+    function autoFitForScreen() {
+      const vp = document.getElementById('mindmap-viewport');
+      // 若為 iPad / 平板 (寬度 <= 1366px)，預設直接啟用「全景適配」，一眼看完整張圖！
+      if (window.innerWidth <= 1366) {
+        fitToScreen();
+      } else {
+        scrollToCenter();
+      }
+    }
+
     // 初始化載入
     window.addEventListener('DOMContentLoaded', () => {
       drawLines();
       initCardBank();
       initSlots();
       initPanning();
+      initTouchGestures();
+
       window.addEventListener('resize', () => {
         drawLines();
       });
-      // 頁面加載完成後平滑置中到「第七課」中心核心
-      setTimeout(scrollToCenter, 150);
+
+      // 載入後自動針對裝置呈現最佳視角
+      setTimeout(autoFitForScreen, 150);
     });
   </script>
 </body>
@@ -1723,6 +1970,20 @@
       setTimeout(() => toast.classList.remove('show'), 2200);
     }
 
+    // 詞庫收合/展開切換 (iPad 極致釋放螢幕空間)
+    function toggleBankCollapse() {
+      const panel = document.getElementById('top-bank-panel');
+      const btn = document.getElementById('toggle-bank-btn');
+      panel.classList.toggle('collapsed');
+      if (panel.classList.contains('collapsed')) {
+        btn.innerText = '🔽 展開詞庫';
+        showToast('已收合詞庫，給予心智圖最大視野！');
+      } else {
+        btn.innerText = '🔼 收合詞庫';
+      }
+      setTimeout(drawLines, 100);
+    }
+
     // 繪製 Coggle 風格貝茲連線
     function drawLines() {
       const svg = document.getElementById('svg-connections');
@@ -1845,7 +2106,7 @@
         card.dataset.text = item.text;
         card.dataset.cat = item.cat;
 
-        // 點擊選取（平板友善）
+        // 點擊選取（iPad 觸控最核心）
         card.onclick = (e) => {
           e.stopPropagation();
           toggleSelectCard(card);
@@ -1866,16 +2127,28 @@
       updateProgress();
     }
 
-    // 選取卡片切換
+    // 選取卡片切換與 iPad 指引燈光連動
     function toggleSelectCard(card) {
+      const guideBar = document.getElementById('touch-guide-bar');
+      const unplacedSlots = document.querySelectorAll('.drop-slot:not(.lighted)');
+
       if (selectedBankCard === card) {
         card.classList.remove('selected');
         selectedBankCard = null;
+        unplacedSlots.forEach(s => s.classList.remove('guide-pulse'));
+        if (guideBar) guideBar.classList.remove('active');
       } else {
         if (selectedBankCard) selectedBankCard.classList.remove('selected');
         selectedBankCard = card;
         card.classList.add('selected');
         playAudio('select');
+
+        // iPad 呼吸引導燈光與提示條
+        unplacedSlots.forEach(s => s.classList.add('guide-pulse'));
+        if (guideBar) {
+          guideBar.innerText = `👉 已選取「${card.dataset.text}」，請直接點擊下方框格！`;
+          guideBar.classList.add('active');
+        }
       }
     }
 
@@ -1885,7 +2158,7 @@
       slots.forEach(slot => {
         slot.dataset.origText = slot.innerText;
 
-        // 點擊 Slot 動作
+        // 點擊 Slot 動作（iPad 觸控操作核心）
         slot.onclick = () => {
           if (selectedBankCard) {
             handleDropOrSelect(selectedBankCard.dataset.text, slot);
@@ -1893,6 +2166,10 @@
               selectedBankCard.classList.remove('selected');
               selectedBankCard = null;
             }
+            // 清除引導燈光
+            document.querySelectorAll('.drop-slot').forEach(s => s.classList.remove('guide-pulse'));
+            const guideBar = document.getElementById('touch-guide-bar');
+            if (guideBar) guideBar.classList.remove('active');
           } else if (slot.classList.contains('lighted')) {
             // 已點亮之卡片，點擊可退回上方詞庫重新思考
             const word = slot.innerText;
@@ -1933,6 +2210,7 @@
         slot.innerText = wordText;
         slot.classList.add('lighted', `color-${slot.dataset.color}`);
         playAudio('correct');
+        if ('vibrate' in navigator) navigator.vibrate(50);
 
         // 隱藏上方該卡片
         hideCardFromBank(wordText);
@@ -1947,6 +2225,7 @@
         // 放錯了！溫和晃動提醒，不變色
         slot.classList.add('shake');
         playAudio('wrong');
+        if ('vibrate' in navigator) navigator.vibrate([100, 50, 100]);
         showToast('再想想看喔！這個關鍵詞不是放在這裡～');
         setTimeout(() => slot.classList.remove('shake'), 500);
       }
@@ -2023,7 +2302,7 @@
     function resetAll() {
       if (!confirm('確定要清空所有已點亮卡片，重新挑戰嗎？')) return;
       document.querySelectorAll('.drop-slot').forEach(slot => {
-        slot.classList.remove('lighted', 'color-red', 'color-magenta', 'color-purple', 'color-blue', 'color-teal', 'color-green');
+        slot.classList.remove('lighted', 'color-red', 'color-magenta', 'color-purple', 'color-blue', 'color-teal', 'color-green', 'guide-pulse');
         slot.innerText = slot.dataset.origText;
       });
       document.querySelectorAll('.gray-word-card').forEach(card => {
@@ -2031,6 +2310,8 @@
         card.classList.remove('selected');
       });
       selectedBankCard = null;
+      const guideBar = document.getElementById('touch-guide-bar');
+      if (guideBar) guideBar.classList.remove('active');
       updateProgress();
       showToast('已全部重置！');
     }
@@ -2039,8 +2320,8 @@
     function triggerVictory() {
       playAudio('fanfare');
       if (window.confetti) {
-        confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
-        setTimeout(() => confetti({ particleCount: 80, spread: 100, origin: { y: 0.4 } }), 400);
+        confetti({ particleCount: 140, spread: 90, origin: { y: 0.6 } });
+        setTimeout(() => confetti({ particleCount: 90, spread: 110, origin: { y: 0.4 } }), 400);
       }
       setTimeout(() => {
         alert('🎉 太棒了！全班全對！29 個關鍵詞全部點亮成功！\n\n整座《跟著公共藝術去旅行》心智圖已完整綻放！\n請點擊右上角「下載心智圖 (PDF)」下載您的學習成果！');
@@ -2126,16 +2407,16 @@
     }
 
     // ============================================================
-    // 【視角平移、縮放與導航控制】
+    // 【視角平移、縮放與 iPad 觸控手勢控制】
     // ============================================================
     let currentScale = 1.0;
 
     function setZoom(scale) {
-      currentScale = Math.min(Math.max(scale, 0.45), 1.5);
+      currentScale = Math.min(Math.max(scale, 0.4), 1.5);
       const canvas = document.getElementById('mindmap-canvas');
       canvas.style.transform = `scale(${currentScale})`;
       document.getElementById('zoom-val-text').innerText = `${Math.round(currentScale * 100)}%`;
-      setTimeout(drawLines, 100);
+      setTimeout(drawLines, 80);
     }
 
     function zoomIn() {
@@ -2190,7 +2471,6 @@
       let startX, startY, sLeft, sTop;
 
       vp.addEventListener('mousedown', (e) => {
-        // 點在卡片、按鈕、輸入框或藝術品徽章上不觸發畫布平移
         if (e.target.closest('.gray-word-card') || e.target.closest('.drop-slot') || e.target.closest('button') || e.target.closest('input') || e.target.closest('.art-photo-badge') || e.target.closest('#canvas-toolbar')) return;
         isDown = true;
         vp.style.cursor = 'grabbing';
@@ -2216,17 +2496,65 @@
       });
     }
 
+    // iPad 雙指縮放 (Pinch-to-Zoom) 觸控手勢監聽
+    function initTouchGestures() {
+      const vp = document.getElementById('mindmap-viewport');
+      let initialDist = null;
+      let initialScale = 1.0;
+
+      vp.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 2) {
+          initialDist = Math.hypot(
+            e.touches[0].pageX - e.touches[1].pageX,
+            e.touches[0].pageY - e.touches[1].pageY
+          );
+          initialScale = currentScale;
+        }
+      }, { passive: true });
+
+      vp.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 2 && initialDist) {
+          const currentDist = Math.hypot(
+            e.touches[0].pageX - e.touches[1].pageX,
+            e.touches[0].pageY - e.touches[1].pageY
+          );
+          const factor = currentDist / initialDist;
+          setZoom(initialScale * factor);
+        }
+      }, { passive: true });
+
+      vp.addEventListener('touchend', (e) => {
+        if (e.touches.length < 2) {
+          initialDist = null;
+        }
+      });
+    }
+
+    // 依據裝置螢幕寬度自動決定最佳預設視角
+    function autoFitForScreen() {
+      const vp = document.getElementById('mindmap-viewport');
+      // 若為 iPad / 平板 (寬度 <= 1366px)，預設直接啟用「全景適配」，一眼看完整張圖！
+      if (window.innerWidth <= 1366) {
+        fitToScreen();
+      } else {
+        scrollToCenter();
+      }
+    }
+
     // 初始化載入
     window.addEventListener('DOMContentLoaded', () => {
       drawLines();
       initCardBank();
       initSlots();
       initPanning();
+      initTouchGestures();
+
       window.addEventListener('resize', () => {
         drawLines();
       });
-      // 頁面加載完成後平滑置中到「第七課」中心核心
-      setTimeout(scrollToCenter, 150);
+
+      // 載入後自動針對裝置呈現最佳視角
+      setTimeout(autoFitForScreen, 150);
     });
   </script>
 </body>
